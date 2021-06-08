@@ -1,0 +1,21 @@
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\bin\Debug\net5.0-windows\Infinite War.exe
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\bin\Debug\net5.0-windows\Infinite War.deps.json
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\bin\Debug\net5.0-windows\Infinite War.runtimeconfig.json
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\bin\Debug\net5.0-windows\Infinite War.runtimeconfig.dev.json
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\bin\Debug\net5.0-windows\Infinite War.dll
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\bin\Debug\net5.0-windows\ref\Infinite War.dll
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\bin\Debug\net5.0-windows\Infinite War.pdb
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite War.csprojAssemblyReference.cache
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite War.csproj.GenerateResource.cache
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite War.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite War.AssemblyInfoInputs.cache
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite War.AssemblyInfo.cs
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite War.csproj.CoreCompileInputs.cache
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite War.dll
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\ref\Infinite War.dll
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite War.pdb
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite War.genruntimeconfig.cache
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite_War.Option_form.resources
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite_War.Main.resources
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite_War.Game_Form.resources
+C:\Users\PJS\Desktop\visual\Infinite War\Infinite War\obj\Debug\net5.0-windows\Infinite_War.Resource.resources
