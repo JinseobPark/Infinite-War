@@ -96,6 +96,8 @@ namespace Infinite_War
             this.Load += new System.EventHandler(this.Game_Form_Load);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.Game_Form_Paint);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Game_Form_KeyDown);
+            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Game_Form_KeyUp);
+            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Game_Form_MouseDown);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);

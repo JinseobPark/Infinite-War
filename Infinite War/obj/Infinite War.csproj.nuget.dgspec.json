@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\PJS\\Desktop\\visual\\Infinite War\\Infinite War\\Infinite War.csproj": {}
+    "C:\\Users\\PJS\\Desktop\\Project\\Infinite-War\\Infinite War\\Infinite War.csproj": {}
   },
   "projects": {
-    "C:\\Users\\PJS\\Desktop\\visual\\Infinite War\\Infinite War\\Infinite War.csproj": {
+    "C:\\Users\\PJS\\Desktop\\Project\\Infinite-War\\Infinite War\\Infinite War.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\PJS\\Desktop\\visual\\Infinite War\\Infinite War\\Infinite War.csproj",
+        "projectUniqueName": "C:\\Users\\PJS\\Desktop\\Project\\Infinite-War\\Infinite War\\Infinite War.csproj",
         "projectName": "Infinite War",
-        "projectPath": "C:\\Users\\PJS\\Desktop\\visual\\Infinite War\\Infinite War\\Infinite War.csproj",
+        "projectPath": "C:\\Users\\PJS\\Desktop\\Project\\Infinite-War\\Infinite War\\Infinite War.csproj",
         "packagesPath": "C:\\Users\\PJS\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\PJS\\Desktop\\visual\\Infinite War\\Infinite War\\obj\\",
+        "outputPath": "C:\\Users\\PJS\\Desktop\\Project\\Infinite-War\\Infinite War\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

@@ -29,6 +29,9 @@ namespace Infinite_War
     };
     public static class GameData
     {
+        public const int FormSize_Width = 1200;
+        public const int FormSize_Height = 800;
+
         public const int player_width = 64;
         public const int player_height = 64;
 
@@ -45,7 +48,12 @@ namespace Infinite_War
         public const int bullet_width = 3;
         public const int bullet_height = 5;
 
+        public const int varWeaponType = 4;
 
+        public const int player_offset_x = player_width / 2;
+        public const int player_offset_y = player_height / 2;
+
+        static public float[] weapon_cool = new float[varWeaponType] {2.0f, 2.0f, 2.0f, 1.0f };//none / dagger / gun / rpg / sword
         static public float dagger_cool;
         static public float gun_cool;
         static public float rpg_cool;
@@ -72,10 +80,10 @@ namespace Infinite_War
             ab.is_RareSelected = false;
             ab.rare_up = WeaponRareUpList.NONE;
 
-            dagger_cool = 2.0f;
-            gun_cool = 2.0f;
-            rpg_cool = 2.0f;
-            sword_cool = 1.0f;
+            weapon_cool[0] = 2.0f;
+            weapon_cool[1] = 2.0f;
+            weapon_cool[2] = 2.0f;
+            weapon_cool[3] = 1.0f;
 
             player_speed = 3.0f;
         }
@@ -116,10 +124,10 @@ namespace Infinite_War
         {
             ab.atkSpeed_up += 1;
 
-            dagger_cool *= 0.9f;
-            gun_cool *= 0.9f;
-            rpg_cool *= 0.9f;
-            sword_cool *= 0.9f;
+            for (int i = 0; i < varWeaponType; i++)
+            {
+                weapon_cool[i] *= 0.9f;
+            }
         }
         static public void Upgrade_rare_up(int what)
         {

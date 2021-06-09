@@ -16,34 +16,18 @@ namespace Infinite_War
             current_score = 0;
         }
     }
-    struct o_Point
-    {
-        public float x;
-        public float y;
-    }
-    struct o_Size
-    {
-        public int width;
-        public int height;
-        private int v1;
-        private int v2;
-
-        public o_Size(int v1, int v2) : this()
-        {
-            this.v1 = v1;
-            this.v2 = v2;
-        }
-    }
     class Object
     {
         public o_Point m_position;
         public o_Size m_size;
+        public float angle;
         public Object()
         {
             m_position.x = 0.0f;
             m_position.y = 0.0f;
             m_size.width = 0;
             m_size.height = 0;
+            angle = 0.0f;
         }
         public Object(float _x, float _y, int _w, int _h)
         {
@@ -51,6 +35,7 @@ namespace Infinite_War
             m_position.y = _y;
             m_size.width = _w;
             m_size.height = _h;
+            angle = 0.0f;
         }
         public virtual void SetObject(float _x, float _y, int _w, int _h)
         {
@@ -58,6 +43,10 @@ namespace Infinite_War
             m_position.y = _y;
             m_size.width = _w;
             m_size.height = _h;
+        }
+        public virtual o_Point getPosition()
+        {
+            return m_position;
         }
         ~Object()
         {  }
@@ -75,10 +64,11 @@ namespace Infinite_War
 
     class Player : Object
     {
-        public int HP;
+        private int HP;
         
         Weapons cur_weapon;
         WeaponRareUpList cur_weapon_up;
+        public bool[] playerStatus = new bool[4] { false, false, false, false }; //up down left right
         public Player(float _x, float _y, int _w, int _h)
         {
             SetObject(_x, _y, _w, _h);
@@ -88,19 +78,24 @@ namespace Infinite_War
         }
         public void PlayerMoveUp(float speed)
         {
-            m_position.y += speed;
+            if(m_position.y > GameData.player_height / 2)
+            m_position.y -= speed; //반대
+
         }
         public void PlayerMoveDown(float speed)
         {
-            m_position.y -= speed;
+            if (m_position.y < GameData.FormSize_Height - GameData.player_height)
+                m_position.y += speed; //반대
         }
         public void PlayerMoveLeft(float speed)
         {
-            m_position.x -= speed;
+            if (m_position.x > 0)
+                m_position.x -= speed;
         }
         public void PlayerMoveRight(float speed)
         {
-            m_position.x += speed;
+            if (m_position.x < GameData.FormSize_Width - GameData.player_width)
+                m_position.x += speed;
         }
         public void ChangeWeapon()
         {
@@ -138,7 +133,32 @@ namespace Infinite_War
                     break;
             }
         }
-
+        public int GetWeaponType()
+        {
+            switch (cur_weapon)
+            {
+                case Weapons.DAGGER:
+                    return 0;
+                case Weapons.GUN:
+                    return 1;
+                case Weapons.RPG:
+                    return 2;
+                case Weapons.SWORD:
+                    return 3;
+            }
+            return 0;
+        }
+        public void PlayerMove()
+        {
+            if (playerStatus[0])
+                PlayerMoveUp(GameData.getPlayerSpeed());
+            if (playerStatus[1])
+                PlayerMoveDown(GameData.getPlayerSpeed());
+            if (playerStatus[2])
+                PlayerMoveLeft(GameData.getPlayerSpeed());
+            if (playerStatus[3])
+                PlayerMoveRight(GameData.getPlayerSpeed());
+        }
     }
 
     class Enemy : Object
