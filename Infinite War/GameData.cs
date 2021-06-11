@@ -38,9 +38,14 @@ namespace Infinite_War
         public const int enemy_width = 64;
         public const int enemy_height = 64;
 
-        public const int MAX_BULLET = 10000;
-        public const int MAX_DAGGER = 10000;
-        public const int MAX_RPG = 10000;
+        public const int MAX_BULLET = 30;
+        public const int MAX_DAGGER = 30;
+        public const int MAX_RPG = 30;
+
+        public const int MAX_ENEMY_NORMAL = 100;
+        public const int MAX_ENEMY_SPEED  = 100;
+        public const int MAX_ENEMY_GUN    = 100;
+        public const int MAX_ENEMY_SHIELD = 100;
 
         public const float enemy_speed = 5.0f;
         public const int player_init_HP = 3;
@@ -85,7 +90,7 @@ namespace Infinite_War
             weapon_cool[2] = 2.0f;
             weapon_cool[3] = 1.0f;
 
-            player_speed = 3.0f;
+            player_speed = 100.0f;
         }
 
         static public float getPlayerSpeed()

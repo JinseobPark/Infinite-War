@@ -37,8 +37,16 @@ namespace Infinite_War
                 Score.record_count = int.Parse(label_record_count.Text);
                 sr.Close();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                string message = "Exception Type : " + ex.GetType() + "\nMessage : " + ex.Message + "\nStack Trace : " + ex.StackTrace + "\n\n";
+                using (FileStream fs = new FileStream("../../../error.log", FileMode.Append))
+                {
+                    string time = "Error Time : " + DateTime.Now.ToString() + "\n";
+                    BinaryFormatter bf = new BinaryFormatter();
+                    bf.Serialize(fs, time + message);
+                    fs.Close();
+                }
                 Save_record();
             }
         }
@@ -66,7 +74,6 @@ namespace Infinite_War
             if(Application.OpenForms["Option_form"] as Option_form == null)
             {
                 Option_form option_form = new Option_form();
-                //option_form.MdiParent = this;
                 option_form.Show();
             }
         }
@@ -76,7 +83,6 @@ namespace Infinite_War
             if (Application.OpenForms["Option_form"] as Option_form == null)
             {
                 Option_form option_form = new Option_form();
-                //option_form.MdiParent = this;
                 option_form.Show();
             }
         }

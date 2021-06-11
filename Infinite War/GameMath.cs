@@ -22,15 +22,29 @@ namespace Infinite_War
         public float x;
         public float y;
 
-        public double SizeOfVector()
+        public o_Vector(float _x, float _y)
         {
-            double result;
-            result = Math.Sqrt(x * x + y * y);
+            x = _x;
+            y = _y;
+        }
+        public float SizeOfVector()
+        {
+            float result;
+            result = (float)Math.Sqrt(x * x + y * y);
             return result;
+        }
+        public void normalize()
+        {
+            float vectorSize = SizeOfVector();
+            x = x / vectorSize;
+            y = y / vectorSize;
         }
     }
     public static class GameMath
     {
+        //static public TimeSpan deltatime = TimeSpan.FromSeconds(1.0 / 60.0);
+        //static public double dt = deltatime.TotalSeconds;
+        static public double dt = TimeSpan.FromSeconds(1.0 / 60.0).TotalSeconds;
         public static double dotProduct(float player_x, float player_y, float mouse_x, float mouse_y)
         {
             o_Point player;
@@ -61,5 +75,14 @@ namespace Infinite_War
             //Console.WriteLine("angle : " + result);
             return result;
         }
+        public static bool CheckInside(o_Point position)
+        {
+            if (position.x < 0 || position.x > GameData.FormSize_Width)
+                return false;
+            if (position.y < 0 || position.y > GameData.FormSize_Height)
+                return false;
+            return true;
+        }
+
     }
 }
