@@ -38,8 +38,8 @@ namespace Infinite_War
         public const int enemy_width = 64;
         public const int enemy_height = 64;
 
-        public const int MAX_BULLET = 30;
-        public const int MAX_DAGGER = 30;
+        public const int MAX_DAGGER = 50;
+        public const int MAX_BULLET = 50;
         public const int MAX_RPG = 30;
 
         public const int MAX_ENEMY_NORMAL = 100;
@@ -50,8 +50,22 @@ namespace Infinite_War
         public const float enemy_speed = 5.0f;
         public const int player_init_HP = 3;
 
-        public const int bullet_width = 3;
+        //Dagger
+        public const int dagger_width = 10;
+        public const int dagger_height = 20;
+        public const float dagger_distance = 150.0f;
+        public const float dagger_distance_up = 250.0f;
+        //Bullet
+        public const int bullet_width = 5;
         public const int bullet_height = 5;
+        public const float bullet_distance = 300.0f;
+        //Rpg
+        public const int rpg_bullet_width = 10;
+        public const int rpg_buttet_height = 10;
+        public const int rpg_bomb_width = 50;
+        public const int rpg_bomb_height = 50;
+        //sword
+        public const int range = 50;
 
         public const int varWeaponType = 4;
 
@@ -85,12 +99,12 @@ namespace Infinite_War
             ab.is_RareSelected = false;
             ab.rare_up = WeaponRareUpList.NONE;
 
-            weapon_cool[0] = 2.0f;
-            weapon_cool[1] = 2.0f;
+            weapon_cool[0] = 1.5f;
+            weapon_cool[1] = 1.5f;
             weapon_cool[2] = 2.0f;
             weapon_cool[3] = 1.0f;
 
-            player_speed = 100.0f;
+            player_speed = 150.0f;
         }
 
         static public float getPlayerSpeed()

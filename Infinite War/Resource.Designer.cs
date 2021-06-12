@@ -83,6 +83,16 @@ namespace Infinite_War {
         /// <summary>
         ///   System.Drawing.Bitmap 형식의 지역화된 리소스를 찾습니다.
         /// </summary>
+        internal static System.Drawing.Bitmap dagger {
+            get {
+                object obj = ResourceManager.GetObject("dagger", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   System.Drawing.Bitmap 형식의 지역화된 리소스를 찾습니다.
+        /// </summary>
         internal static System.Drawing.Bitmap enemy_gun {
             get {
                 object obj = ResourceManager.GetObject("enemy_gun", resourceCulture);

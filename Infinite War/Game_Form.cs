@@ -18,7 +18,7 @@ namespace Infinite_War
         float deltaTime, attackTime;
         bool is_TimeElapsed;
         Bitmap Ground = new Bitmap(1200, 800);
-        Bitmap bomb, bullet, e_normal, e_speed, e_gun, e_shield;
+        Bitmap bomb, bullet, dagger, e_normal, e_speed, e_gun, e_shield;
         Bitmap p_player, p_dagger, p_dagger_d, p_gun, p_gun_d, p_rpg, p_rpg_d, p_sword, sword_range;
         Player player;
 
@@ -27,13 +27,14 @@ namespace Infinite_War
         Enemy_gun[]    enemy_gun    = new Enemy_gun[GameData.MAX_ENEMY_GUN];
         Enemy_shield[] enemy_shield = new Enemy_shield[GameData.MAX_ENEMY_SHIELD];
 
-        PlayerDagger[] player_dagger = new PlayerDagger[GameData.MAX_DAGGER];
+        PlayerDagger[] player_dagger = Untility.InitializeArray<PlayerDagger>(GameData.MAX_DAGGER);
         PlayerBullet[] player_bullet = Untility.InitializeArray<PlayerBullet>(GameData.MAX_BULLET);//Enumerable.Repeat(0, GameData.MAX_BULLET).Select(b => new PlayerBullet()).ToArray();//new PlayerBullet[GameData.MAX_BULLET];
         PlayerRpg[]    player_rpg    = Untility.InitializeArray<PlayerRpg>(GameData.MAX_RPG);//new PlayerRpg[GameData.MAX_RPG];
 
         private delegate void AttackDelegate();
 
         Bitmap clone_player;
+        Bitmap[] clone_dagger = new Bitmap[GameData.MAX_DAGGER];
 
 
         [DllImport("User32.dll")]
@@ -51,8 +52,6 @@ namespace Infinite_War
                 player.playerStatus[2] = false;
             if (e.KeyCode == Keys.D)
                 player.playerStatus[3] = false;
-
-
         }
 
         private void Game_Form_MouseDown(object sender, MouseEventArgs e)
@@ -88,6 +87,7 @@ namespace Infinite_War
         {
             bomb = Resource.bomb;
             bullet = Resource.bullet;
+            dagger = Resource.dagger;
             e_normal = Resource.enemy_normal;
             e_speed = Resource.enemy_speed;
             e_gun = Resource.enemy_gun;
@@ -206,6 +206,7 @@ namespace Infinite_War
             clone_player = (Bitmap)p_player.Clone();
             clone_player = RotateImage(clone_player, player.angle - 90);
             g.DrawImage(clone_player, player.getPosition().x, player.getPosition().y, GameData.player_width, GameData.player_height);
+
             DrawWeapons(g);
             //Todo : Draw images to delegate.!
 
@@ -230,7 +231,7 @@ namespace Infinite_War
         private Bitmap RotateImage(Bitmap bmp, float angle)
         {
             Bitmap rotatedImage = new Bitmap(bmp.Width, bmp.Height);
-            rotatedImage.SetResolution(GameData.player_width, GameData.player_height);
+            //rotatedImage.SetResolution(GameData.player_width, GameData.player_height);
 
             using (Graphics g = Graphics.FromImage(rotatedImage))
             {
@@ -323,24 +324,59 @@ namespace Infinite_War
 
         private void InitWeapons()
         {
-            for (int i = 0; i < GameData.MAX_BULLET; i++)
+            int i;
+            for (i = 0; i < GameData.MAX_BULLET; i++)
                 player_bullet[i].exist = false;
+            for (i = 0; i < GameData.MAX_DAGGER; i++)
+                player_dagger[i].exist = false;
+            for (i = 0; i < GameData.MAX_RPG; i++)
+                player_rpg[i].exist = false;
+
             player_bullet.Initialize();
         }
         private void UpdateWeapons()
         {
             int i;
+            for (i = 0; i < GameData.MAX_DAGGER; i++)
+            {
+                if (player_dagger[i].exist == false) continue;
+
+                player_dagger[i].moveObject();
+            }
             for (i = 0; i < GameData.MAX_BULLET; i++)
             {
                 if (player_bullet[i].exist == false) continue;
 
                 player_bullet[i].moveObject();
             }
+            for (i = 0; i < GameData.MAX_RPG; i++)
+            {
+                if (player_rpg[i].exist == false) continue;
+
+                player_rpg[i].moveObject();
+            }
         }
 
         private void DaggerAttack()
         {
             //Todo : Dagger Attack (throw)
+            int i;
+            for (i = 0; i < GameData.MAX_DAGGER; i++)
+            {
+                if (player_dagger[i].exist == false)
+                    break;
+            }
+            if (i != GameData.MAX_DAGGER)
+            {
+                o_Vector direction;
+                direction.x = PointToClient(MousePosition).X - (player.getPosition().x + GameData.player_offset_x);
+                direction.y = PointToClient(MousePosition).Y - (player.getPosition().y + GameData.player_offset_y);
+                player_dagger[i].exist = true;
+                player_dagger[i].SetObjectPosition(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y);
+                player_dagger[i].SetDirection(direction);
+                player_dagger[i].is_can_rotate = true;
+
+            }
         }
         private void GunAttack()
         {
@@ -357,13 +393,28 @@ namespace Infinite_War
                 direction.x = PointToClient(MousePosition).X - (player.getPosition().x + GameData.player_offset_x);
                 direction.y = PointToClient(MousePosition).Y - (player.getPosition().y + GameData.player_offset_y);
                 player_bullet[i].exist = true;
-                player_bullet[i].SetObject(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y);
+                player_bullet[i].SetObjectPosition(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y);
                 player_bullet[i].SetDirection(direction);
             }
         }
         private void RpgAttack()
         {
-            //Todo : RpgAttack
+            int i;
+            for (i = 0; i < GameData.MAX_RPG; i++)
+            {
+                if (player_rpg[i].exist == false)
+                    break;
+            }
+
+            if (i != GameData.MAX_RPG)
+            {
+                o_Vector direction;
+                direction.x = PointToClient(MousePosition).X - (player.getPosition().x + GameData.player_offset_x);
+                direction.y = PointToClient(MousePosition).Y - (player.getPosition().y + GameData.player_offset_y);
+                player_rpg[i].exist = true;
+                player_rpg[i].SetObjectPosition(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y);
+                player_rpg[i].SetDirection(direction);
+            }
         }
         private void SwordAttack()
         {
@@ -374,12 +425,30 @@ namespace Infinite_War
         {
             int i;
             //draw
+            for (i = 0; i < GameData.MAX_DAGGER; i++)
+            {
+                if (player_dagger[i].exist == false) continue;
+
+                if (player_dagger[i].is_can_rotate == true)
+                {
+                    player_dagger[i].angle = (float)GameMath.GetAngle(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y, PointToClient(MousePosition).X, PointToClient(MousePosition).Y);
+                    clone_dagger[i] = (Bitmap)dagger.Clone();
+                    clone_dagger[i] = RotateImage(clone_dagger[i], player_dagger[i].angle - 90);
+                    player_dagger[i].is_can_rotate = false;
+                }
+                graphics.DrawImage(clone_dagger[i], player_dagger[i].getPosition().x, player_dagger[i].getPosition().y, GameData.dagger_width, GameData.dagger_height);
+            }
             for (i = 0; i < GameData.MAX_BULLET; i++)
             {
                 if (player_bullet[i].exist == false) continue;
 
-                //player_bullet[i].moveObject();
                 graphics.DrawImage(bullet, player_bullet[i].getPosition().x, player_bullet[i].getPosition().y, GameData.bullet_width, GameData.bullet_height);
+            }
+            for (i = 0; i < GameData.MAX_RPG; i++)
+            {
+                if (player_rpg[i].exist == false) continue;
+
+                graphics.DrawImage(bullet, player_rpg[i].getPosition().x, player_rpg[i].getPosition().y, GameData.rpg_bullet_width, GameData.rpg_buttet_height);
             }
         }
 

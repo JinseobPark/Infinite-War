@@ -61,6 +61,11 @@ namespace Infinite_War
             m_size.width = _w;
             m_size.height = _h;
         }
+        public virtual void SetObjectPosition(float _x, float _y)
+        {
+            m_position.x = _x;
+            m_position.y = _y;
+        }
         public virtual o_Point getPosition()
         {
             return m_position;
@@ -99,6 +104,7 @@ namespace Infinite_War
     class Player : Object
     {
         private int HP;
+        public bool is_can_move;
         //delegate void CharacterMove(float speed);
         Weapons cur_weapon;
         WeaponRareUpList cur_weapon_up;
@@ -273,30 +279,86 @@ namespace Infinite_War
     }
     class PlayerDagger : Object
     {
-        public PlayerDagger(float _x, float _y)
+        public bool is_can_rotate;
+        public o_Vector distance_vector;
+
+        public PlayerDagger()
         {
-            SetObject(_x, _y, GameData.bullet_width, GameData.bullet_height);
+            SetObjectSize(GameData.bullet_width, GameData.bullet_height);
+            speed = 800.0f;
+            is_can_rotate = false;
+            distance_vector.x = 0.0f;
+            distance_vector.y = 0.0f;
+        }
+        public override void moveObject()
+        {
+            if (distance_vector.SizeOfVector() <= GameData.dagger_distance)
+            {
+                m_direction.normalize();
+                m_position.x += m_direction.x * speed * (float)GameMath.dt;
+                m_position.y += m_direction.y * speed * (float)GameMath.dt;
+                distance_vector.x += m_direction.x * speed * (float)GameMath.dt;
+                distance_vector.y += m_direction.y * speed * (float)GameMath.dt;
+            }
+            else
+            {
+                m_position.x = 0.0f;
+                m_position.y = 0.0f;
+                m_size.width = 0;
+                m_size.height = 0;
+                m_direction.x = 0.0f;
+                m_direction.y = 0.0f;
+                angle = 0.0f;
+                exist = false;
+                is_can_rotate = false;
+                distance_vector.x = 0.0f;
+                distance_vector.y = 0.0f;
+            }
         }
     }
     class PlayerBullet : Object
     {
-
+        public o_Vector distance_vector;
         public PlayerBullet()
         {
             SetObjectSize(GameData.bullet_width, GameData.bullet_height);
-            speed = 350.0f;
+            speed = 1000.0f;
+            distance_vector.x = 0.0f;
+            distance_vector.y = 0.0f;
         }
-        public void SetObject(float _x, float _y)
+        public override void moveObject()
         {
-            m_position.x = _x;
-            m_position.y = _y;
-            m_size.width = GameData.bullet_width;
-            m_size.height = GameData.bullet_height;
+            if (distance_vector.SizeOfVector() <= GameData.bullet_distance)
+            {
+                m_direction.normalize();
+                m_position.x += m_direction.x * speed * (float)GameMath.dt;
+                m_position.y += m_direction.y * speed * (float)GameMath.dt;
+                distance_vector.x += m_direction.x * speed * (float)GameMath.dt;
+                distance_vector.y += m_direction.y * speed * (float)GameMath.dt;
+            }
+            else
+            {
+                m_position.x = 0.0f;
+                m_position.y = 0.0f;
+                m_size.width = 0;
+                m_size.height = 0;
+                m_direction.x = 0.0f;
+                m_direction.y = 0.0f;
+                angle = 0.0f;
+                exist = false;
+                distance_vector.x = 0.0f;
+                distance_vector.y = 0.0f;
+            }
         }
 
     }
     class PlayerRpg : Object
     {
+        public PlayerRpg()
+        {
+            SetObjectSize(GameData.bullet_width, GameData.bullet_height);
+            speed = 700.0f;
+        }
         //public PlayerRpg(float _x, float _y)
         //{
         //    SetObject(_x, _y, GameData.bullet_width, GameData.bullet_height);
