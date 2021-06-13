@@ -11,6 +11,11 @@ namespace Infinite_War
     {
         public float x;
         public float y;
+        o_Point(float _x, float _y)
+        {
+            x = _x;
+            y = _y;
+        }
     }
     struct o_Size
     {
@@ -82,6 +87,12 @@ namespace Infinite_War
             if (position.y < 0 || position.y > GameData.FormSize_Height)
                 return false;
             return true;
+        }
+        public static double getDistance(o_Point from, o_Point to)
+        {
+            double result;
+            result = (double)Math.Sqrt((Math.Abs((from.x - to.x) * (from.x - to.x)) + (Math.Abs((from.y - to.y) * (from.y - to.y)))));
+            return result;
         }
 
     }

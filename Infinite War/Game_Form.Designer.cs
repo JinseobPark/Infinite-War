@@ -45,7 +45,7 @@ namespace Infinite_War
             this.toolStripMenu});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1184, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(428, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -88,7 +88,7 @@ namespace Infinite_War
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1184, 761);
+            this.ClientSize = new System.Drawing.Size(699, 454);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "Game_Form";
@@ -98,6 +98,7 @@ namespace Infinite_War
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Game_Form_KeyDown);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Game_Form_KeyUp);
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Game_Form_MouseDown);
+            this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Game_Form_MouseUp);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);

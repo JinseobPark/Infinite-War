@@ -15,27 +15,31 @@ namespace Infinite_War
     public partial class Game_Form : Form
     {
         DateTime StartTime = DateTime.Now, EndAttackTime = DateTime.Now;
-        float deltaTime, attackTime;
+        float attackTime;
         bool is_TimeElapsed;
         Bitmap Ground = new Bitmap(1200, 800);
         Bitmap bomb, bullet, dagger, e_normal, e_speed, e_gun, e_shield;
         Bitmap p_player, p_dagger, p_dagger_d, p_gun, p_gun_d, p_rpg, p_rpg_d, p_sword, sword_range;
         Player player;
 
-        Enemy_normal[] enemy_normal = new Enemy_normal[GameData.MAX_ENEMY_NORMAL];
-        Enemy_speed[]  enemy_speed  = new Enemy_speed[GameData.MAX_ENEMY_SPEED];
-        Enemy_gun[]    enemy_gun    = new Enemy_gun[GameData.MAX_ENEMY_GUN];
-        Enemy_shield[] enemy_shield = new Enemy_shield[GameData.MAX_ENEMY_SHIELD];
+        Enemy_normal[] enemy_normal;
+        Enemy_speed[]  enemy_speed;
+        Enemy_gun[]    enemy_gun;
+        Enemy_shield[] enemy_shield;
 
-        PlayerDagger[] player_dagger = Untility.InitializeArray<PlayerDagger>(GameData.MAX_DAGGER);
-        PlayerBullet[] player_bullet = Untility.InitializeArray<PlayerBullet>(GameData.MAX_BULLET);//Enumerable.Repeat(0, GameData.MAX_BULLET).Select(b => new PlayerBullet()).ToArray();//new PlayerBullet[GameData.MAX_BULLET];
-        PlayerRpg[]    player_rpg    = Untility.InitializeArray<PlayerRpg>(GameData.MAX_RPG);//new PlayerRpg[GameData.MAX_RPG];
-
-        private delegate void AttackDelegate();
+        PlayerDagger[] player_dagger;
+        PlayerBullet[] player_bullet;
+        PlayerRpg[]    player_rpg;
+        PlayerSword[]  player_sword;
 
         Bitmap clone_player;
-        Bitmap[] clone_dagger = new Bitmap[GameData.MAX_DAGGER];
+        Bitmap[] clone_dagger;
+        Bitmap[] clone_e_normal, clone_e_speed, clone_e_gun, clone_e_shield;
 
+        Random random;
+
+        Rectangle playerR, bulletR, bombR, enemyR, interR;
+        
 
         [DllImport("User32.dll")]
         private static extern short GetKeyState(int nVirtKey);
@@ -60,14 +64,13 @@ namespace Infinite_War
             {
                 Console.WriteLine("Attack");
                 playerAttack();
-                //player.Attack();
                 StartTime = EndAttackTime;
             }
 
-            Console.WriteLine("player position : x : " + player.getPosition().x + " y : " + player.getPosition().y);
+            //Console.WriteLine("player position : x : " + player.getPosition().x + " y : " + player.getPosition().y);
             //Console.WriteLine("mouse position : x : " + PointToClient(MousePosition).X + " y : " + PointToClient(MousePosition).Y);
             //Console.WriteLine("dt : " + GameMath.dt);
-            Console.WriteLine("player speed : " + player.speed);
+            //Console.WriteLine("player speed : " + GameData.getPlayerSpeed());
         }
 
         public Game_Form()
@@ -102,8 +105,23 @@ namespace Infinite_War
             p_sword = Resource.player_sword;
             sword_range = Resource.sword_range;
             clone_player = Resource.player_dagger;
-            GameData.init();
 
+            enemy_normal  = Untility.InitializeArray<Enemy_normal>(GameData.MAX_ENEMY_NORMAL);//new Enemy_normal[GameData.MAX_ENEMY_NORMAL];
+            enemy_speed   = Untility.InitializeArray<Enemy_speed>(GameData.MAX_ENEMY_SPEED); //new Enemy_speed[GameData.MAX_ENEMY_SPEED];
+            enemy_gun     = Untility.InitializeArray<Enemy_gun>(GameData.MAX_ENEMY_GUN); //new Enemy_gun[GameData.MAX_ENEMY_GUN];
+            enemy_shield  = Untility.InitializeArray<Enemy_shield>(GameData.MAX_ENEMY_SHIELD); //new Enemy_shield[GameData.MAX_ENEMY_SHIELD]; 
+            player_dagger = Untility.InitializeArray<PlayerDagger>(GameData.MAX_DAGGER);
+            player_bullet = Untility.InitializeArray<PlayerBullet>(GameData.MAX_BULLET);//Enumerable.Repeat(0, GameData.MAX_BULLET).Select(b => new PlayerBullet()).ToArray();//new PlayerBullet[GameData.MAX_BULLET];
+            player_rpg    = Untility.InitializeArray<PlayerRpg>(GameData.MAX_RPG);
+            player_sword  = Untility.InitializeArray<PlayerSword>(GameData.MAX_SWORD);
+            clone_dagger  = new Bitmap[GameData.MAX_DAGGER];
+            clone_e_normal = new Bitmap[GameData.MAX_ENEMY_NORMAL];
+            clone_e_speed = new Bitmap[GameData.MAX_ENEMY_SPEED];
+            clone_e_gun = new Bitmap[GameData.MAX_ENEMY_GUN];
+            clone_e_shield = new Bitmap[GameData.MAX_ENEMY_SHIELD];
+
+            random = new Random();
+            GameData.init();
 
             InitWeapons();
             is_TimeElapsed = true;
@@ -151,6 +169,12 @@ namespace Infinite_War
                 Console.WriteLine("atk speed up");
                 GameData.Upgrade_atkSpeed_up();
             }
+            if (e.KeyCode == Keys.G)
+            {
+                GameData.StageUp();
+                Console.WriteLine("Stage Up. current stage : " + GameData.GetStage());
+
+            }
         }
 
 
@@ -166,6 +190,24 @@ namespace Infinite_War
                 Option_form option_form = new Option_form();
                 option_form.Show();
             }
+        }
+
+        private void Game_Form_MouseUp(object sender, MouseEventArgs e)
+        {
+            switch (player.GetWeaponType())
+            {
+                case 0:
+                case 1:
+                case 2:
+                    break;
+                case 3:
+                    SwordAttack();
+                    break;
+            }
+            player.is_can_move = true;
+            player.is_charging = false;
+            Console.WriteLine("charged : " + GameData.sword_charge);
+            GameData.sword_charge = 0.0;
         }
 
         private void toolStripMenuMain_Click(object sender, EventArgs e)
@@ -187,27 +229,24 @@ namespace Infinite_War
         private void timer1_Tick(object sender, EventArgs e)
         {
             Graphics g = Graphics.FromImage(Ground);
-            g.Clear(Color.Black);
+            g.Clear(Color.White);
             EndAttackTime = DateTime.Now;
-            deltaTime  = (EndAttackTime.Ticks - StartTime.Ticks) / 10000000f;
             attackTime = (EndAttackTime.Ticks - StartTime.Ticks) / 10000000f;
+            CreateEnemy();
+
             player.PlayerMove();
-
             UpdateWeapons();
+            WeaponCharge();
+            MoveEnemy();
 
-
-            Rectangle rec_player = new Rectangle((int)player.getPosition().x, (int)player.getPosition().y, GameData.player_width, GameData.player_height);
-
-
+            //Rectangle rec_player = new Rectangle((int)player.getPosition().x, (int)player.getPosition().y, GameData.player_width, GameData.player_height);
+            CheckPlayerWithEnemy();
+            CheckBullet();
             //Draw
-            g.DrawImage(bomb, ClientSize.Width / 2, ClientSize.Height / 2, 50, 50);
 
-            player.angle = (float)GameMath.GetAngle(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y, PointToClient(MousePosition).X, PointToClient(MousePosition).Y);
-            clone_player = (Bitmap)p_player.Clone();
-            clone_player = RotateImage(clone_player, player.angle - 90);
-            g.DrawImage(clone_player, player.getPosition().x, player.getPosition().y, GameData.player_width, GameData.player_height);
-
+            DrawPlayer(g);
             DrawWeapons(g);
+            DrawEnemy(g);
             //Todo : Draw images to delegate.!
 
             //pause
@@ -227,11 +266,17 @@ namespace Infinite_War
             Invalidate();
         }
 
-
+        
+        private void DrawPlayer(Graphics graphics)
+        {
+            player.angle = (float)GameMath.GetAngle(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y, PointToClient(MousePosition).X, PointToClient(MousePosition).Y);
+            clone_player = (Bitmap)p_player.Clone();
+            clone_player = RotateImage(clone_player, player.angle - 100);
+            graphics.DrawImage(clone_player, player.getPosition().x, player.getPosition().y, GameData.player_width, GameData.player_height);
+        }
         private Bitmap RotateImage(Bitmap bmp, float angle)
         {
             Bitmap rotatedImage = new Bitmap(bmp.Width, bmp.Height);
-            //rotatedImage.SetResolution(GameData.player_width, GameData.player_height);
 
             using (Graphics g = Graphics.FromImage(rotatedImage))
             {
@@ -241,6 +286,14 @@ namespace Infinite_War
                 g.DrawImage(bmp, 0, 0, bmp.Width, bmp.Height);
             }
             return rotatedImage;
+        }
+
+        private void WeaponCharge()
+        {
+            if(player.is_charging)
+            {
+                GameData.sword_charge += GameMath.dt;
+            }
         }
 
         private void ChangeImagePlayerWeapon(int weaponType)
@@ -297,9 +350,287 @@ namespace Infinite_War
         private void CheckBullet()
         {
             //Todo : check colide bullet with enemy
+            //dagger
+            foreach (PlayerDagger weapon in player_dagger)
+            {
+                if (!weapon.exist) continue;
+                bulletR = new Rectangle((int)weapon.getPosition().x, (int)weapon.getPosition().y, weapon.getSize().width, weapon.getSize().height);
+
+                foreach (Enemy_normal enemy in enemy_normal)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+                foreach (Enemy_speed enemy in enemy_speed)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+                foreach (Enemy_gun enemy in enemy_gun)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+                foreach (Enemy_shield enemy in enemy_shield)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+            }
+            //bullet
+            foreach (PlayerBullet weapon in player_bullet)
+            {
+                if (!weapon.exist) continue;
+                bulletR = new Rectangle((int)weapon.getPosition().x, (int)weapon.getPosition().y, weapon.getSize().width, weapon.getSize().height);
+
+                foreach (Enemy_normal enemy in enemy_normal)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+                foreach (Enemy_speed enemy in enemy_speed)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+                foreach (Enemy_gun enemy in enemy_gun)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+                foreach (Enemy_shield enemy in enemy_shield)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+            }
+            //rpg
+            foreach (PlayerRpg weapon in player_rpg)
+            {
+                if (!weapon.exist) continue;
+                bulletR = new Rectangle((int)weapon.getPosition().x, (int)weapon.getPosition().y, weapon.getSize().width, weapon.getSize().height);
+
+                foreach (Enemy_normal enemy in enemy_normal)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+                foreach (Enemy_speed enemy in enemy_speed)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+                foreach (Enemy_gun enemy in enemy_gun)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+                foreach (Enemy_shield enemy in enemy_shield)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interR = Rectangle.Intersect(bulletR, enemyR);
+                    if (!interR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                        weapon.exist = false;
+                    }
+                }
+            }
+            //sword
+            foreach (PlayerSword weapon in player_sword)
+            {
+                if (!weapon.exist) continue;
+                
+                foreach (Enemy_normal enemy in enemy_normal)
+                {
+                    if (!enemy.exist) continue;
+
+                    if (GameMath.getDistance(player.getPosition(), enemy.getPosition()) < weapon.get_sword_range() / 2)
+                    {
+                        enemy.hit(weapon.getDammage());
+                    }
+                }
+                foreach (Enemy_speed enemy in enemy_speed)
+                {
+                    if (!enemy.exist) continue;
+
+                    if (GameMath.getDistance(player.getPosition(), enemy.getPosition()) < weapon.get_sword_range() / 2)
+                    {
+                        enemy.hit(weapon.getDammage());
+                    }
+                }
+                foreach (Enemy_gun enemy in enemy_gun)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    if (GameMath.getDistance(player.getPosition(), enemy.getPosition()) < weapon.get_sword_range() / 2)
+                    {
+                        enemy.hit(weapon.getDammage());
+                    }
+                }
+                foreach (Enemy_shield enemy in enemy_shield)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    if (GameMath.getDistance(player.getPosition(), enemy.getPosition()) < weapon.get_sword_range() / 2)
+                    {
+                        enemy.hit(weapon.getDammage());
+                    }
+                }
+            }
+
         }
-        private void CheckEnemy()
+        private void CheckPlayerWithEnemy()
         {
+            playerR = new Rectangle((int)player.getPosition().x, (int)player.getPosition().y, GameData.player_width, GameData.player_height);
+
+            foreach(Enemy_normal enemy in enemy_normal)
+            {
+                if (!enemy.exist) continue;
+                
+                enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                interR = Rectangle.Intersect(playerR, enemyR);
+                if(!interR.IsEmpty)
+                {
+                    enemy.AttackSuccess();
+                    player.hit();
+                }
+            }
+            foreach (Enemy_speed enemy in enemy_speed)
+            {
+                if (!enemy.exist) continue;
+
+                enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                interR = Rectangle.Intersect(playerR, enemyR);
+                if (!interR.IsEmpty)
+                {
+                    enemy.AttackSuccess();
+                    player.hit();
+                }
+            }
+            foreach (Enemy_gun enemy in enemy_gun)
+            {
+                if (!enemy.exist) continue;
+
+                enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                interR = Rectangle.Intersect(playerR, enemyR);
+                if (!interR.IsEmpty)
+                {
+                    enemy.AttackSuccess();
+                    player.hit();
+                }
+            }
+            foreach (Enemy_shield enemy in enemy_shield)
+            {
+                if (!enemy.exist) continue;
+
+                enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                interR = Rectangle.Intersect(playerR, enemyR);
+                if (!interR.IsEmpty)
+                {
+                    enemy.AttackSuccess();
+                    player.hit();
+                }
+            }
             //Todo : check colide enemy with bullet or player
         }
 
@@ -317,44 +648,76 @@ namespace Infinite_War
                     RpgAttack();
                     break;
                 case 3:
-                    SwordAttack();
+                    SwordAttackCharge();
                     break;
             }
         }
 
         private void InitWeapons()
         {
-            int i;
-            for (i = 0; i < GameData.MAX_BULLET; i++)
-                player_bullet[i].exist = false;
-            for (i = 0; i < GameData.MAX_DAGGER; i++)
-                player_dagger[i].exist = false;
-            for (i = 0; i < GameData.MAX_RPG; i++)
-                player_rpg[i].exist = false;
+            //int i;
+            //for (i = 0; i < GameData.MAX_BULLET; i++)
+            //    player_bullet[i].exist = false;
+            //for (i = 0; i < GameData.MAX_DAGGER; i++)
+            //    player_dagger[i].exist = false;
+            //for (i = 0; i < GameData.MAX_RPG; i++)
+            //    player_rpg[i].exist = false;
+            //for (i = 0; i < GameData.MAX_SWORD; i++)
+            //    player_sword[i].exist = false;
 
-            player_bullet.Initialize();
+            //player_bullet.Initialize();
+            //player_dagger.Initialize();
+            //player_rpg.Initialize();
+            //player_sword.Initialize();
         }
         private void UpdateWeapons()
         {
             int i;
-            for (i = 0; i < GameData.MAX_DAGGER; i++)
+            foreach(PlayerDagger weapon in player_dagger)
             {
-                if (player_dagger[i].exist == false) continue;
-
-                player_dagger[i].moveObject();
+                if (weapon.exist == false) continue;
+                weapon.moveObject();
             }
-            for (i = 0; i < GameData.MAX_BULLET; i++)
+            foreach (PlayerBullet weapon in player_bullet)
             {
-                if (player_bullet[i].exist == false) continue;
-
-                player_bullet[i].moveObject();
+                if (weapon.exist == false) continue;
+                weapon.moveObject();
             }
-            for (i = 0; i < GameData.MAX_RPG; i++)
+            foreach (PlayerRpg weapon in player_rpg)
             {
-                if (player_rpg[i].exist == false) continue;
-
-                player_rpg[i].moveObject();
+                if (weapon.exist == false) continue;
+                weapon.moveObject();
             }
+            foreach (PlayerSword weapon in player_sword)
+            {
+                if (weapon.exist == false) continue;
+                weapon.moveObject();
+            }
+
+            //for (i = 0; i < GameData.MAX_DAGGER; i++)
+            //{
+            //    if (player_dagger[i].exist == false) continue;
+
+            //    player_dagger[i].moveObject();
+            //}
+            //for (i = 0; i < GameData.MAX_BULLET; i++)
+            //{
+            //    if (player_bullet[i].exist == false) continue;
+
+            //    player_bullet[i].moveObject();
+            //}
+            //for (i = 0; i < GameData.MAX_RPG; i++)
+            //{
+            //    if (player_rpg[i].exist == false) continue;
+
+            //    player_rpg[i].moveObject();
+            //}
+            //for (i = 0; i < GameData.MAX_SWORD; i++)
+            //{
+            //    if (player_sword[i].exist == false) continue;
+
+            //    player_sword[i].moveObject();
+            //}
         }
 
         private void DaggerAttack()
@@ -375,7 +738,6 @@ namespace Infinite_War
                 player_dagger[i].SetObjectPosition(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y);
                 player_dagger[i].SetDirection(direction);
                 player_dagger[i].is_can_rotate = true;
-
             }
         }
         private void GunAttack()
@@ -418,7 +780,25 @@ namespace Infinite_War
         }
         private void SwordAttack()
         {
-            //Todo : Sword Attack
+            int i;
+            for (i = 0; i < GameData.MAX_SWORD; i++)
+            {
+                if (player_sword[i].exist == false)
+                    break;
+            }
+
+            if (i != GameData.MAX_SWORD)
+            {
+                player_sword[i].exist = true;
+                player_sword[i].SetObjectPosition(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y);
+                player_sword[i].Charging(GameData.sword_charge);
+                Console.WriteLine("sword lange : " + player_sword[i].sword_range);
+            }
+        }
+        private void SwordAttackCharge()
+        {
+            player.is_can_move = false;
+            player.is_charging = true;
         }
 
         private void DrawWeapons(Graphics graphics)
@@ -450,6 +830,257 @@ namespace Infinite_War
 
                 graphics.DrawImage(bullet, player_rpg[i].getPosition().x, player_rpg[i].getPosition().y, GameData.rpg_bullet_width, GameData.rpg_buttet_height);
             }
+            for (i = 0; i < GameData.MAX_SWORD; i++)
+            {
+                if (player_sword[i].exist == false) continue;
+
+                graphics.DrawImage(sword_range, player_sword[i].getPosition().x - (int)player_sword[i].sword_range / 2, player_sword[i].getPosition().y - (int)player_sword[i].sword_range / 2, (int)player_sword[i].sword_range, (int)player_sword[i].sword_range);
+            }
+        }
+
+        private void CreateEnemy()
+        {
+            if (GameData.GetStage() >= GameData.lv1_stage) CreateEnemy_normal();
+            if (GameData.GetStage() >= GameData.lv2_stage) CreateEnemy_speed();
+            if (GameData.GetStage() >= GameData.lv3_stage) CreateEnemy_gun();
+            if (GameData.GetStage() >= GameData.lv4_stage) CreateEnemy_shield();
+        }
+        private void CreateEnemy_normal()
+        {
+            int i;
+            if (random.Next(20) == 0)
+            {
+                for (i = 0; i < GameData.MAX_ENEMY_NORMAL && enemy_normal[i].exist == true; i++)
+                {
+                }
+
+                if (i != GameData.MAX_ENEMY_NORMAL)
+                {
+                    int random_position = random.Next(4);
+                    o_Point create_position = new o_Point();
+                    switch (random_position)
+                    {
+                        //left
+                        case 0:
+                            create_position.x = 0;
+                            create_position.y = random.Next(GameData.FormSize_Height);
+                            break;
+                        //right
+                        case 1:
+                            create_position.x = GameData.FormSize_Width - GameData.enemy_width;
+                            create_position.y = random.Next(GameData.FormSize_Height);
+                            break;
+                        //up
+                        case 2:
+                            create_position.x = random.Next(GameData.FormSize_Width);
+                            create_position.y = 0;
+                            break;
+                        //down
+                        case 3:
+                            create_position.x = random.Next(GameData.FormSize_Width);
+                            create_position.y = GameData.FormSize_Height - GameData.enemy_height;
+                            break;
+                    }
+                    enemy_normal[i].m_position = create_position;
+                    enemy_normal[i].SetHP();
+                    enemy_normal[i].exist = true;
+                }
+            }
+        }
+        private void CreateEnemy_speed()
+        {
+            int i;
+            if (random.Next(20) == 0)
+            {
+                for (i = 0; i < GameData.MAX_ENEMY_SPEED && enemy_speed[i].exist == true; i++)
+                {
+                }
+
+                if (i != GameData.MAX_ENEMY_SPEED)
+                {
+                    int random_position = random.Next(4);
+                    o_Point create_position = new o_Point();
+                    switch (random_position)
+                    {
+                        //left
+                        case 0:
+                            create_position.x = 0;
+                            create_position.y = random.Next(GameData.FormSize_Height);
+                            break;
+                        //right
+                        case 1:
+                            create_position.x = GameData.FormSize_Width - GameData.enemy_width;
+                            create_position.y = random.Next(GameData.FormSize_Height);
+                            break;
+                        //up
+                        case 2:
+                            create_position.x = random.Next(GameData.FormSize_Width);
+                            create_position.y = 0;
+                            break;
+                        //down
+                        case 3:
+                            create_position.x = random.Next(GameData.FormSize_Width);
+                            create_position.y = GameData.FormSize_Height - GameData.enemy_height;
+                            break;
+                    }
+                    enemy_speed[i].m_position = create_position;
+                    enemy_speed[i].SetHP();
+                    enemy_speed[i].exist = true;
+                }
+            }
+        }
+        private void CreateEnemy_gun()
+        {
+            int i;
+            if (random.Next(20) == 0)
+            {
+                for (i = 0; i < GameData.MAX_ENEMY_GUN && enemy_gun[i].exist == true; i++)
+                {
+                }
+
+                if (i != GameData.MAX_ENEMY_GUN)
+                {
+                    int random_position = random.Next(4);
+                    o_Point create_position = new o_Point();
+                    switch (random_position)
+                    {
+                        //left
+                        case 0:
+                            create_position.x = 0;
+                            create_position.y = random.Next(GameData.FormSize_Height);
+                            break;
+                        //right
+                        case 1:
+                            create_position.x = GameData.FormSize_Width - GameData.enemy_width;
+                            create_position.y = random.Next(GameData.FormSize_Height);
+                            break;
+                        //up
+                        case 2:
+                            create_position.x = random.Next(GameData.FormSize_Width);
+                            create_position.y = 0;
+                            break;
+                        //down
+                        case 3:
+                            create_position.x = random.Next(GameData.FormSize_Width);
+                            create_position.y = GameData.FormSize_Height - GameData.enemy_height;
+                            break;
+                    }
+                    enemy_gun[i].m_position = create_position;
+                    enemy_gun[i].SetHP();
+                    enemy_gun[i].exist = true;
+                }
+            }
+        }
+        private void CreateEnemy_shield()
+        {
+            int i;
+            if (random.Next(20) == 0)
+            {
+                for (i = 0; i < GameData.MAX_ENEMY_SHIELD && enemy_shield[i].exist == true; i++)
+                {
+                }
+
+                if (i != GameData.MAX_ENEMY_SHIELD)
+                {
+                    int random_position = random.Next(4);
+                    o_Point create_position = new o_Point();
+                    switch (random_position)
+                    {
+                        //left
+                        case 0:
+                            create_position.x = 0;
+                            create_position.y = random.Next(GameData.FormSize_Height);
+                            break;
+                        //right
+                        case 1:
+                            create_position.x = GameData.FormSize_Width - GameData.enemy_width;
+                            create_position.y = random.Next(GameData.FormSize_Height);
+                            break;
+                        //up
+                        case 2:
+                            create_position.x = random.Next(GameData.FormSize_Width);
+                            create_position.y = 0;
+                            break;
+                        //down
+                        case 3:
+                            create_position.x = random.Next(GameData.FormSize_Width);
+                            create_position.y = GameData.FormSize_Height - GameData.enemy_height;
+                            break;
+                    }
+                    enemy_shield[i].m_position = create_position;
+                    enemy_shield[i].SetHP();
+                    enemy_shield[i].exist = true;
+                }
+            }
+        }
+
+        private void MoveEnemy()
+        {
+            if (GameData.GetStage() >= GameData.lv1_stage)
+                foreach (Enemy_normal enemy in enemy_normal)
+                {
+                    if (enemy.exist == false) continue;
+                    enemy.moveObject(player.getPosition());
+                }
+            if (GameData.GetStage() >= GameData.lv2_stage)
+                foreach (Enemy_speed enemy in enemy_speed)
+                {
+                    if (enemy.exist == false) continue;
+                    enemy.moveObject(player.getPosition());
+                }
+            if (GameData.GetStage() >= GameData.lv3_stage)
+                foreach (Enemy_gun enemy in enemy_gun)
+                {
+                    if (enemy.exist == false) continue;
+                    enemy.moveObject(player.getPosition());
+                }
+            if (GameData.GetStage() >= GameData.lv4_stage)
+                foreach (Enemy_shield enemy in enemy_shield)
+                {
+                    if (enemy.exist == false) continue;
+                    enemy.moveObject(player.getPosition());
+                }
+        }
+        private void DrawEnemy(Graphics graphics)
+        {
+            int i;
+            if(GameData.GetStage() >= GameData.lv1_stage)
+                for(i = 0; i < GameData.MAX_ENEMY_NORMAL; i++)
+                {
+                    if (enemy_normal[i].exist == false) continue;
+                    enemy_normal[i].angle = (float)GameMath.GetAngle(enemy_normal[i].getPosition().x, enemy_normal[i].getPosition().y, player.getPosition().x, player.getPosition().y);
+                    clone_e_normal[i] = (Bitmap)e_normal.Clone();
+                    clone_e_normal[i] = RotateImage(clone_e_normal[i], enemy_normal[i].angle - 90);
+                    graphics.DrawImage(clone_e_normal[i], enemy_normal[i].getPosition().x, enemy_normal[i].getPosition().y, enemy_normal[i].m_size.width, enemy_normal[i].m_size.height);
+                }
+            if (GameData.GetStage() >= GameData.lv2_stage)
+                for (i = 0; i < GameData.MAX_ENEMY_SPEED; i++)
+                {
+                    if (enemy_speed[i].exist == false) continue;
+                    enemy_speed[i].angle = (float)GameMath.GetAngle(enemy_speed[i].getPosition().x, enemy_speed[i].getPosition().y, player.getPosition().x, player.getPosition().y);
+                    clone_e_speed[i] = (Bitmap)e_speed.Clone();
+                    clone_e_speed[i] = RotateImage(clone_e_speed[i], enemy_speed[i].angle - 90);
+                    graphics.DrawImage(clone_e_speed[i], enemy_speed[i].getPosition().x, enemy_speed[i].getPosition().y, enemy_speed[i].m_size.width, enemy_speed[i].m_size.height);
+                }
+
+            if (GameData.GetStage() >= GameData.lv3_stage)
+                for (i = 0; i < GameData.MAX_ENEMY_GUN; i++)
+                {
+                    if (enemy_gun[i].exist == false) continue;
+                    enemy_gun[i].angle = (float)GameMath.GetAngle(enemy_gun[i].getPosition().x, enemy_gun[i].getPosition().y, player.getPosition().x, player.getPosition().y);
+                    clone_e_gun[i] = (Bitmap)e_gun.Clone();
+                    clone_e_gun[i] = RotateImage(clone_e_gun[i], enemy_gun[i].angle - 90);
+                    graphics.DrawImage(clone_e_gun[i], enemy_gun[i].getPosition().x, enemy_gun[i].getPosition().y, enemy_gun[i].m_size.width, enemy_gun[i].m_size.height);
+                }
+            if (GameData.GetStage() >= GameData.lv4_stage)
+                for (i = 0; i < GameData.MAX_ENEMY_SHIELD; i++)
+                {
+                    if (enemy_shield[i].exist == false) continue;
+                    enemy_shield[i].angle = (float)GameMath.GetAngle(enemy_shield[i].getPosition().x, enemy_shield[i].getPosition().y, player.getPosition().x, player.getPosition().y);
+                    clone_e_shield[i] = (Bitmap)e_shield.Clone();
+                    clone_e_shield[i] = RotateImage(clone_e_shield[i], enemy_shield[i].angle - 90);
+                    graphics.DrawImage(clone_e_shield[i], enemy_shield[i].getPosition().x, enemy_shield[i].getPosition().y, enemy_shield[i].m_size.width, enemy_shield[i].m_size.height);
+                }
         }
 
 

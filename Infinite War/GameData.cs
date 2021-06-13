@@ -38,34 +38,45 @@ namespace Infinite_War
         public const int enemy_width = 64;
         public const int enemy_height = 64;
 
-        public const int MAX_DAGGER = 50;
-        public const int MAX_BULLET = 50;
-        public const int MAX_RPG = 30;
+        public const int MAX_DAGGER = 30;
+        public const int MAX_BULLET = 30;
+        public const int MAX_RPG = 20;
+        public const int MAX_SWORD = 10;
 
-        public const int MAX_ENEMY_NORMAL = 100;
-        public const int MAX_ENEMY_SPEED  = 100;
-        public const int MAX_ENEMY_GUN    = 100;
-        public const int MAX_ENEMY_SHIELD = 100;
+        public const int MAX_ENEMY_NORMAL = 30;
+        public const int MAX_ENEMY_SPEED  = 20;
+        public const int MAX_ENEMY_GUN    = 10;
+        public const int MAX_ENEMY_SHIELD = 10;
 
-        public const float enemy_speed = 5.0f;
+        public const float enemy_speed = 100.0f;
         public const int player_init_HP = 3;
 
+        public const int lv1_stage = 1;
+        public const int lv2_stage = 5;
+        public const int lv3_stage = 10;
+        public const int lv4_stage = 15;
         //Dagger
         public const int dagger_width = 10;
         public const int dagger_height = 20;
         public const float dagger_distance = 150.0f;
         public const float dagger_distance_up = 250.0f;
+        static public int init_dagger_dammage = 5;
         //Bullet
         public const int bullet_width = 5;
         public const int bullet_height = 5;
         public const float bullet_distance = 300.0f;
+        static public int init_bullet_dammage = 3;
         //Rpg
         public const int rpg_bullet_width = 10;
         public const int rpg_buttet_height = 10;
         public const int rpg_bomb_width = 50;
         public const int rpg_bomb_height = 50;
+        static public int init_rpg_dammage = 10;
         //sword
-        public const int range = 50;
+        public const int sword_max_range = 300;
+        public const double sword_timer = 0.2;
+        static public double sword_charge = 0.0;
+        static public int init_sword_dammage = 1;
 
         public const int varWeaponType = 4;
 
@@ -78,7 +89,7 @@ namespace Infinite_War
         static public float rpg_cool;
         static public float sword_cool;
 
-        static public int stage;
+        static private int stage;
         static public int kill;
         static public Ability ab;
 
@@ -102,11 +113,18 @@ namespace Infinite_War
             weapon_cool[0] = 1.5f;
             weapon_cool[1] = 1.5f;
             weapon_cool[2] = 2.0f;
-            weapon_cool[3] = 1.0f;
+            weapon_cool[3] = 0.3f;
 
             player_speed = 150.0f;
         }
-
+        static public void StageUp()
+        {
+            stage++;
+        }
+        static public int GetStage()
+        {
+            return stage;
+        }
         static public float getPlayerSpeed()
         {
             return player_speed;
