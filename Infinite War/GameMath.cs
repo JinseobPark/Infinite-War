@@ -45,7 +45,7 @@ namespace Infinite_War
             y = y / vectorSize;
         }
     }
-    public static class GameMath
+    public interface GameMath
     {
         //static public TimeSpan deltatime = TimeSpan.FromSeconds(1.0 / 60.0);
         //static public double dt = deltatime.TotalSeconds;

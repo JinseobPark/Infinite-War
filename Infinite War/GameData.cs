@@ -27,6 +27,27 @@ namespace Infinite_War
         public bool is_RareSelected;
         public WeaponRareUpList rare_up;
     };
+    public static class Score
+    {
+        static private int record_score;
+        static Score()
+        {
+            record_score = 0;
+        }
+        static public void CheckNewRecord()
+        {
+            if (record_score < GameData.GetKill())
+                record_score = GameData.GetKill();
+        }
+        static public int getRecordScore()
+        {
+            return record_score;
+        }
+        static public void SetRecordScore(int score)
+        {
+            record_score = score;
+        }
+    }
     public static class GameData
     {
         public const int FormSize_Width = 1200;
@@ -42,6 +63,7 @@ namespace Infinite_War
         public const int MAX_BULLET = 30;
         public const int MAX_RPG = 20;
         public const int MAX_SWORD = 10;
+        public const int MAX_BOMB = 10;
 
         public const int MAX_ENEMY_NORMAL = 30;
         public const int MAX_ENEMY_SPEED  = 20;
@@ -60,30 +82,32 @@ namespace Infinite_War
         public const int dagger_height = 20;
         public const float dagger_distance = 150.0f;
         public const float dagger_distance_up = 250.0f;
-        static public int init_dagger_dammage = 5;
+        static public int init_dagger_dammage = 50;
         //Bullet
         public const int bullet_width = 5;
         public const int bullet_height = 5;
         public const float bullet_distance = 300.0f;
-        static public int init_bullet_dammage = 3;
+        static public int init_bullet_dammage = 30;
         //Rpg
         public const int rpg_bullet_width = 10;
         public const int rpg_buttet_height = 10;
-        public const int rpg_bomb_width = 50;
-        public const int rpg_bomb_height = 50;
+        public const int rpg_bomb_width = 200;
+        public const int rpg_bomb_height = 200;
         static public int init_rpg_dammage = 10;
+        static public int init_bomb_dammage = 100;
+        public const double bomb_timer = 0.2;
         //sword
         public const int sword_max_range = 300;
         public const double sword_timer = 0.2;
         static public double sword_charge = 0.0;
-        static public int init_sword_dammage = 1;
+        static public int init_sword_dammage = 10;
 
         public const int varWeaponType = 4;
 
         public const int player_offset_x = player_width / 2;
         public const int player_offset_y = player_height / 2;
 
-        static public float[] weapon_cool = new float[varWeaponType] {2.0f, 2.0f, 2.0f, 1.0f };//none / dagger / gun / rpg / sword
+        static public float[] weapon_cool = new float[varWeaponType] {0.0f, 0.0f, 0.0f, 0.0f };//dagger / gun / rpg / sword
         static public float dagger_cool;
         static public float gun_cool;
         static public float rpg_cool;
@@ -132,22 +156,33 @@ namespace Infinite_War
         static public void Upgrade_damage_up()
         {
             ab.damage_up += 1;
+            init_dagger_dammage += (int)(init_dagger_dammage * 0.1);
+            init_bullet_dammage = (int)(init_bullet_dammage * 0.1);
+            init_rpg_dammage += (int)(init_rpg_dammage * 0.1);
+            init_bomb_dammage = (int)(init_bomb_dammage * 0.1);
+            init_sword_dammage = (int)(init_sword_dammage * 0.1);
         }
         static public void Upgrade_dagger_up()
         {
             ab.dagger_up += 1;
+            init_dagger_dammage += (int)(init_dagger_dammage * 0.2);
         }
+        
         static public void Upgrade_gun_up()
         {
             ab.gun_up += 1;
+            init_bullet_dammage = (int)(init_bullet_dammage * 0.2);
         }
         static public void Upgrade_rpg_up()
         {
             ab.rpg_up += 1;
+            init_rpg_dammage += (int)(init_rpg_dammage * 0.2);
+            init_bomb_dammage = (int)(init_bomb_dammage * 0.2);
         }
         static public void Upgrade_sword_up()
         {
             ab.sword_up += 1;
+            init_sword_dammage = (int)(init_sword_dammage * 0.2);
         }
         static public void Upgrade_prob_up()
         {
@@ -155,12 +190,12 @@ namespace Infinite_War
         }
         static public void Upgrade_move_up()
         {
+            ab.move_up++;
             player_speed *= 1.2f;
         }
         static public void Upgrade_atkSpeed_up()
         {
             ab.atkSpeed_up += 1;
-
             for (int i = 0; i < varWeaponType; i++)
             {
                 weapon_cool[i] *= 0.9f;
@@ -184,6 +219,14 @@ namespace Infinite_War
                     ab.rare_up = WeaponRareUpList.SWORD;
                     break;
             }
+        }
+        static public void AddKill()
+        {
+            kill++;
+        }
+        static public int GetKill()
+        {
+            return kill;
         }
 
 

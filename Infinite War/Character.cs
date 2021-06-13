@@ -7,17 +7,18 @@ using System.Threading.Tasks;
 
 namespace Infinite_War
 {
-    public static class Score
+    interface IObject
     {
-        static public int record_count;
-        static public int current_score;
-        static Score()
-        {
-            record_count = 0;
-            current_score = 0;
-        }
+        o_Point getPositionEdge();
+        o_Point getPositionMid();
+        o_Size getSize();
+        void SetObject(float _x, float _y, int _w, int _h);
+        void SetObjectSize(int _w, int _h);
+        void SetObjectPosition(float _x, float _y);
+        void moveObject();
+        void SetDirection(o_Vector v);
     }
-    class Object
+    class Object : IObject
     {
         public o_Point m_position;
         public o_Size m_size;
@@ -66,9 +67,16 @@ namespace Infinite_War
             m_position.x = _x;
             m_position.y = _y;
         }
-        public virtual o_Point getPosition()
+        public virtual o_Point getPositionEdge()
         {
             return m_position;
+        }
+        public virtual o_Point getPositionMid()
+        {
+            o_Point result;
+            result.x = m_position.x + m_size.width / 2;
+            result.y = m_position.y + m_size.height / 2;
+            return result;
         }
         public virtual o_Size getSize()
         {
@@ -76,7 +84,7 @@ namespace Infinite_War
         }
         public virtual void moveObject()
         {
-            if(GameMath.CheckInside(getPosition()))
+            if(GameMath.CheckInside(getPositionEdge()))
             {
                 m_direction.normalize();
                 m_position.x += m_direction.x * speed * (float)GameMath.dt;
@@ -104,7 +112,6 @@ namespace Infinite_War
         {  }
     }
 
-
     class Player : Object
     {
         private int HP { get; set; }
@@ -125,11 +132,15 @@ namespace Infinite_War
             is_can_move = true;
             is_charging = false;
         }
-        public override o_Point getPosition()
+        public override o_Point getPositionEdge()
+        {
+            return m_position;
+        }
+        public override o_Point getPositionMid()
         {
             o_Point result;
-            result.x = m_position.x - GameData.player_offset_x;
-            result.y = m_position.y - GameData.player_offset_y;
+            result.x = m_position.x + GameData.player_offset_x;
+            result.y = m_position.y + GameData.player_offset_y;
             return result;
         }
         public void PlayerMoveUp(float speed)
@@ -253,7 +264,8 @@ namespace Infinite_War
         public virtual void Death()
         {
             exist = false;
-            Score.record_count++;
+            GameData.AddKill();
+            //Score.AddCurScore();
         }
         public void AttackSuccess()
         {
@@ -269,10 +281,6 @@ namespace Infinite_War
             m_position.y += m_direction.y * speed * (float)GameMath.dt;
         }
 
-        public virtual void CreateEnemy()
-        {
-
-        }
     }
 
     class Enemy_normal : Enemy
@@ -407,10 +415,39 @@ namespace Infinite_War
             speed = 700.0f;
             damage = GameData.init_rpg_dammage;
         }
-        //public PlayerRpg(float _x, float _y)
-        //{
-        //    SetObject(_x, _y, GameData.bullet_width, GameData.bullet_height);
-        //}
+    }
+    class PlayerRpgBomb : PlayerWeapon
+    {
+        double time_exist;
+        int bomb_range;
+        public PlayerRpgBomb()
+        {
+            SetObjectSize(GameData.rpg_bomb_width, GameData.rpg_bomb_height);
+            speed = 0.0f;
+            damage = GameData.init_bomb_dammage;
+            time_exist = 0.0;
+            bomb_range = GameData.rpg_bomb_height;
+        }
+
+        public override void moveObject()
+        {
+            if (time_exist <= GameData.bomb_timer)
+            {
+                time_exist += GameMath.dt;
+                //exist
+            }
+            else
+            {
+                m_position.x = 0.0f;
+                m_position.y = 0.0f;
+                exist = false;
+                time_exist = 0.0;
+            }
+        }
+        public int get_bomb_range()
+        {
+            return bomb_range / 2;
+        }
     }
     class PlayerSword : PlayerWeapon
     {
@@ -421,15 +458,13 @@ namespace Infinite_War
             timer = 0.0;
             sword_range = 0.0;
             damage = GameData.init_sword_dammage;
-            //SetObjectSize(GameData.bullet_width, GameData.bullet_height);
-            //speed = 700.0f;
         }
 
         public override void moveObject()
         {
-            timer += GameMath.dt;
             if (timer <= GameData.sword_timer)
             {
+                timer += GameMath.dt;
                 //exist
             }
             else
@@ -457,6 +492,4 @@ namespace Infinite_War
             return sword_range;
         }
     }
-
-
 }

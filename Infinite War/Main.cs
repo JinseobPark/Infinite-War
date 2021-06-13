@@ -21,8 +21,7 @@ namespace Infinite_War
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            Score.record_count = 0;
-            Score.current_score = 0;
+            Score.SetRecordScore(0);;
             Load_record();
         }
 
@@ -34,7 +33,7 @@ namespace Infinite_War
             {
                 StreamReader sr = new StreamReader("../../../record.txt");
                 label_record_count.Text = sr.ReadToEnd();
-                Score.record_count = int.Parse(label_record_count.Text);
+                Score.SetRecordScore(int.Parse(label_record_count.Text));
                 sr.Close();
             }
             catch (Exception ex)
@@ -53,7 +52,7 @@ namespace Infinite_War
 
         private void Save_record()
         {
-            label_record_count.Text = Score.record_count.ToString();
+            label_record_count.Text = Score.getRecordScore().ToString();
             using (StreamWriter sw = new StreamWriter("../../../record.txt"))
             {
                 sw.Write(label_record_count.Text);

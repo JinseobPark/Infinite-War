@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Media;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace Infinite_War
 {
@@ -17,6 +18,8 @@ namespace Infinite_War
         DateTime StartTime = DateTime.Now, EndAttackTime = DateTime.Now;
         float attackTime;
         bool is_TimeElapsed;
+        bool is_pause, must_select;
+        Stopwatch stoper = new Stopwatch();
         Bitmap Ground = new Bitmap(1200, 800);
         Bitmap bomb, bullet, dagger, e_normal, e_speed, e_gun, e_shield;
         Bitmap p_player, p_dagger, p_dagger_d, p_gun, p_gun_d, p_rpg, p_rpg_d, p_sword, sword_range;
@@ -31,15 +34,19 @@ namespace Infinite_War
         PlayerBullet[] player_bullet;
         PlayerRpg[]    player_rpg;
         PlayerSword[]  player_sword;
+        PlayerRpgBomb[] player_rpg_bomb;
 
         Bitmap clone_player;
         Bitmap[] clone_dagger;
         Bitmap[] clone_e_normal, clone_e_speed, clone_e_gun, clone_e_shield;
 
         Random random;
+        Graphics g_ground;
 
-        Rectangle playerR, bulletR, bombR, enemyR, interR;
-        
+        Rectangle playerR, bulletR, bombR, enemyR, interR, interBombR, enemyBombR;
+
+        public delegate void del_drawingImages(Graphics graphic);
+        public delegate void del_CheckColide();
 
         [DllImport("User32.dll")]
         private static extern short GetKeyState(int nVirtKey);
@@ -106,14 +113,15 @@ namespace Infinite_War
             sword_range = Resource.sword_range;
             clone_player = Resource.player_dagger;
 
-            enemy_normal  = Untility.InitializeArray<Enemy_normal>(GameData.MAX_ENEMY_NORMAL);//new Enemy_normal[GameData.MAX_ENEMY_NORMAL];
-            enemy_speed   = Untility.InitializeArray<Enemy_speed>(GameData.MAX_ENEMY_SPEED); //new Enemy_speed[GameData.MAX_ENEMY_SPEED];
-            enemy_gun     = Untility.InitializeArray<Enemy_gun>(GameData.MAX_ENEMY_GUN); //new Enemy_gun[GameData.MAX_ENEMY_GUN];
-            enemy_shield  = Untility.InitializeArray<Enemy_shield>(GameData.MAX_ENEMY_SHIELD); //new Enemy_shield[GameData.MAX_ENEMY_SHIELD]; 
-            player_dagger = Untility.InitializeArray<PlayerDagger>(GameData.MAX_DAGGER);
-            player_bullet = Untility.InitializeArray<PlayerBullet>(GameData.MAX_BULLET);//Enumerable.Repeat(0, GameData.MAX_BULLET).Select(b => new PlayerBullet()).ToArray();//new PlayerBullet[GameData.MAX_BULLET];
-            player_rpg    = Untility.InitializeArray<PlayerRpg>(GameData.MAX_RPG);
-            player_sword  = Untility.InitializeArray<PlayerSword>(GameData.MAX_SWORD);
+            enemy_normal  = Untility.Init_array<Enemy_normal>(GameData.MAX_ENEMY_NORMAL);
+            enemy_speed   = Untility.Init_array<Enemy_speed>(GameData.MAX_ENEMY_SPEED);
+            enemy_gun     = Untility.Init_array<Enemy_gun>(GameData.MAX_ENEMY_GUN);
+            enemy_shield  = Untility.Init_array<Enemy_shield>(GameData.MAX_ENEMY_SHIELD); 
+            player_dagger = Untility.Init_array<PlayerDagger>(GameData.MAX_DAGGER);
+            player_bullet = Untility.Init_array<PlayerBullet>(GameData.MAX_BULLET);
+            player_rpg    = Untility.Init_array<PlayerRpg>(GameData.MAX_RPG);
+            player_sword  = Untility.Init_array<PlayerSword>(GameData.MAX_SWORD);
+            player_rpg_bomb = Untility.Init_array<PlayerRpgBomb>(GameData.MAX_BOMB);
             clone_dagger  = new Bitmap[GameData.MAX_DAGGER];
             clone_e_normal = new Bitmap[GameData.MAX_ENEMY_NORMAL];
             clone_e_speed = new Bitmap[GameData.MAX_ENEMY_SPEED];
@@ -125,7 +133,10 @@ namespace Infinite_War
 
             InitWeapons();
             is_TimeElapsed = true;
+            is_pause = false;
+            must_select = false;
             timer1.Start();
+
             Console.WriteLine("Load Data!\n");
         }
         private void Game_Form_KeyDown(object sender, KeyEventArgs e)
@@ -158,6 +169,13 @@ namespace Infinite_War
                 }
             }
 
+            if(must_select)
+            {
+                if (e.KeyCode == Keys.D1)
+                {
+                    Selecttype(out must_select, out is_pause);
+                }
+            }
             /*  cheat code */
             if (e.KeyCode == Keys.R)
             {
@@ -173,7 +191,6 @@ namespace Infinite_War
             {
                 GameData.StageUp();
                 Console.WriteLine("Stage Up. current stage : " + GameData.GetStage());
-
             }
         }
 
@@ -228,53 +245,80 @@ namespace Infinite_War
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
-            Graphics g = Graphics.FromImage(Ground);
-            g.Clear(Color.White);
-            EndAttackTime = DateTime.Now;
-            attackTime = (EndAttackTime.Ticks - StartTime.Ticks) / 10000000f;
-            CreateEnemy();
+            del_drawingImages drawing = (grap) =>
+            {
+                DrawWeapons(grap);
+                DrawEnemy(grap);
+                DrawScore(grap);
+                DrawPlayer(grap);
+            };
+            del_CheckColide checkColide = () =>
+            {
+                CheckPlayerWithEnemy();
+                CheckBullet();
+            };
 
-            player.PlayerMove();
-            UpdateWeapons();
-            WeaponCharge();
-            MoveEnemy();
+            if (is_pause == false)
+            {
+                g_ground = Graphics.FromImage(Ground);
+                g_ground.Clear(Color.White);
+                EndAttackTime = DateTime.Now;
+                attackTime = (EndAttackTime.Ticks - StartTime.Ticks) / 10000000f;
+                CreateEnemy();
 
-            //Rectangle rec_player = new Rectangle((int)player.getPosition().x, (int)player.getPosition().y, GameData.player_width, GameData.player_height);
-            CheckPlayerWithEnemy();
-            CheckBullet();
-            //Draw
+                player.PlayerMove();
+                UpdateWeapons();
+                WeaponCharge();
+                MoveEnemy();
+                
+                Score.CheckNewRecord();
 
-            DrawPlayer(g);
-            DrawWeapons(g);
-            DrawEnemy(g);
-            //Todo : Draw images to delegate.!
+                checkColide();
+                //Draw
+                drawing(g_ground);
 
-            //pause
-            //if (!is_TimeElapsed)
-            //{
-            //    Font _font = new System.Drawing.Font(new FontFamily("휴먼둥근헤드라인"), 20, FontStyle.Bold);
-            //    g.DrawString("PAUSE", _font, Brushes.DarkBlue, new PointF(600, 200));
-            //    if(ModifierKeys == Keys.Escape)
-            //    {
-            //        timer1.Enabled = true;
-            //        is_TimeElapsed = true;
-            //    }
-            //}
+                LevelUp();
 
+            }
+            else
+            {
 
-
+            }
             Invalidate();
         }
+        private void LevelUp()
+        {
+            if (GameData.GetKill() > 3 && GameData.GetStage() == 1)
+            {
+                GameData.StageUp();
+                ShowType(out must_select, out is_pause);
+            }
+        }
+        private void ShowType(out bool select, out bool pause)
+        {
+            select = true;
+            pause = true;
+        }
+        private void Selecttype(out bool select, out bool pause)
+        {
 
-        
+            select = false;
+            pause = false;
+        }
+        private void DrawScore(Graphics graphics)
+        {
+            Font _font = new System.Drawing.Font(new FontFamily("휴먼둥근헤드라인"), 14, FontStyle.Bold);
+            graphics.DrawString("New Record : " + Score.getRecordScore().ToString(), _font, Brushes.Black, new PointF(10, 30));
+            graphics.DrawString("Record : " + GameData.GetKill().ToString(), _font, Brushes.Black, new PointF(500, 30));
+        }
         private void DrawPlayer(Graphics graphics)
         {
-            player.angle = (float)GameMath.GetAngle(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y, PointToClient(MousePosition).X, PointToClient(MousePosition).Y);
+            player.angle = (float)GameMath.GetAngle(player.getPositionMid().x, player.getPositionMid().y, PointToClient(MousePosition).X, PointToClient(MousePosition).Y);
             clone_player = (Bitmap)p_player.Clone();
-            clone_player = RotateImage(clone_player, player.angle - 100);
-            graphics.DrawImage(clone_player, player.getPosition().x, player.getPosition().y, GameData.player_width, GameData.player_height);
+            RotateImage(clone_player, player.angle - 100, out clone_player);
+            graphics.DrawImage(clone_player, player.getPositionEdge().x, player.getPositionEdge().y, GameData.player_width, GameData.player_height);
         }
-        private Bitmap RotateImage(Bitmap bmp, float angle)
+        private void RotateImage(Bitmap bmp, float angle, out Bitmap result)
         {
             Bitmap rotatedImage = new Bitmap(bmp.Width, bmp.Height);
 
@@ -285,7 +329,7 @@ namespace Infinite_War
                 g.TranslateTransform(-bmp.Width / 2, -bmp.Height / 2);
                 g.DrawImage(bmp, 0, 0, bmp.Width, bmp.Height);
             }
-            return rotatedImage;
+            result = rotatedImage;
         }
 
         private void WeaponCharge()
@@ -354,13 +398,13 @@ namespace Infinite_War
             foreach (PlayerDagger weapon in player_dagger)
             {
                 if (!weapon.exist) continue;
-                bulletR = new Rectangle((int)weapon.getPosition().x, (int)weapon.getPosition().y, weapon.getSize().width, weapon.getSize().height);
+                bulletR = new Rectangle((int)weapon.getPositionEdge().x, (int)weapon.getPositionEdge().y, weapon.getSize().width, weapon.getSize().height);
 
                 foreach (Enemy_normal enemy in enemy_normal)
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
@@ -373,7 +417,7 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
@@ -386,7 +430,7 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
@@ -399,7 +443,7 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
@@ -413,13 +457,13 @@ namespace Infinite_War
             foreach (PlayerBullet weapon in player_bullet)
             {
                 if (!weapon.exist) continue;
-                bulletR = new Rectangle((int)weapon.getPosition().x, (int)weapon.getPosition().y, weapon.getSize().width, weapon.getSize().height);
+                bulletR = new Rectangle((int)weapon.getPositionEdge().x, (int)weapon.getPositionEdge().y, weapon.getSize().width, weapon.getSize().height);
 
                 foreach (Enemy_normal enemy in enemy_normal)
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
@@ -432,7 +476,7 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
@@ -445,7 +489,7 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
@@ -458,7 +502,7 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
@@ -472,18 +516,20 @@ namespace Infinite_War
             foreach (PlayerRpg weapon in player_rpg)
             {
                 if (!weapon.exist) continue;
-                bulletR = new Rectangle((int)weapon.getPosition().x, (int)weapon.getPosition().y, weapon.getSize().width, weapon.getSize().height);
+                bulletR = new Rectangle((int)weapon.getPositionEdge().x, (int)weapon.getPositionEdge().y, weapon.getSize().width, weapon.getSize().height);
 
                 foreach (Enemy_normal enemy in enemy_normal)
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
                     {
+                        RpgBombCreate(weapon.getPositionMid());
                         enemy.hit(weapon.getDammage());
+                        CheckBomb();
                         weapon.exist = false;
                     }
                 }
@@ -491,12 +537,14 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
                     {
+                        RpgBombCreate(weapon.getPositionMid());
                         enemy.hit(weapon.getDammage());
+                        CheckBomb();
                         weapon.exist = false;
                     }
                 }
@@ -504,12 +552,14 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
                     {
+                        RpgBombCreate(weapon.getPositionMid());
                         enemy.hit(weapon.getDammage());
+                        CheckBomb();
                         weapon.exist = false;
                     }
                 }
@@ -517,12 +567,14 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                     interR = Rectangle.Intersect(bulletR, enemyR);
                     if (!interR.IsEmpty)
                     {
+                        RpgBombCreate(weapon.getPositionMid());
                         enemy.hit(weapon.getDammage());
+                        CheckBomb();
                         weapon.exist = false;
                     }
                 }
@@ -536,7 +588,7 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    if (GameMath.getDistance(player.getPosition(), enemy.getPosition()) < weapon.get_sword_range() / 2)
+                    if (GameMath.getDistance(player.getPositionMid(), enemy.getPositionMid()) < weapon.get_sword_range() / 2)
                     {
                         enemy.hit(weapon.getDammage());
                     }
@@ -545,7 +597,7 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    if (GameMath.getDistance(player.getPosition(), enemy.getPosition()) < weapon.get_sword_range() / 2)
+                    if (GameMath.getDistance(player.getPositionMid(), enemy.getPositionMid()) < weapon.get_sword_range() / 2)
                     {
                         enemy.hit(weapon.getDammage());
                     }
@@ -554,9 +606,9 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
-                    if (GameMath.getDistance(player.getPosition(), enemy.getPosition()) < weapon.get_sword_range() / 2)
+                    if (GameMath.getDistance(player.getPositionMid(), enemy.getPositionMid()) < weapon.get_sword_range() / 2)
                     {
                         enemy.hit(weapon.getDammage());
                     }
@@ -565,9 +617,9 @@ namespace Infinite_War
                 {
                     if (!enemy.exist) continue;
 
-                    enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                    enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
-                    if (GameMath.getDistance(player.getPosition(), enemy.getPosition()) < weapon.get_sword_range() / 2)
+                    if (GameMath.getDistance(player.getPositionMid(), enemy.getPositionMid()) < weapon.get_sword_range() / 2)
                     {
                         enemy.hit(weapon.getDammage());
                     }
@@ -575,15 +627,76 @@ namespace Infinite_War
             }
 
         }
+        private void CheckBomb()
+        {
+            foreach(PlayerRpgBomb weapon in player_rpg_bomb)
+            {
+                if (!weapon.exist) continue;
+                bombR = new Rectangle((int)weapon.getPositionEdge().x, (int)weapon.getPositionEdge().y, weapon.getSize().width, weapon.getSize().height);
+
+                foreach (Enemy_normal enemy in enemy_normal)
+                {
+                    if (!enemy.exist) continue;
+
+                    //enemyBombR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+
+                    //interBombR = Rectangle.Intersect(bombR, enemyBombR);
+                    //if (!interBombR.IsEmpty)
+                    //{
+                    //    enemy.hit(weapon.getDammage());
+                    //}
+                    if (GameMath.getDistance(weapon.getPositionMid(), enemy.getPositionMid()) < weapon.get_bomb_range())
+                    {
+                        enemy.hit(weapon.getDammage());
+                    }
+                }
+                foreach (Enemy_speed enemy in enemy_speed)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyBombR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interBombR = Rectangle.Intersect(bombR, enemyBombR);
+                    if (!interBombR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                    }
+                }
+                foreach (Enemy_gun enemy in enemy_gun)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyBombR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interBombR = Rectangle.Intersect(bombR, enemyBombR);
+                    if (!interBombR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                    }
+                }
+                foreach (Enemy_shield enemy in enemy_shield)
+                {
+                    if (!enemy.exist) continue;
+
+                    enemyBombR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
+
+                    interBombR = Rectangle.Intersect(bombR, enemyBombR);
+                    if (!interBombR.IsEmpty)
+                    {
+                        enemy.hit(weapon.getDammage());
+                    }
+                }
+            }
+        }
         private void CheckPlayerWithEnemy()
         {
-            playerR = new Rectangle((int)player.getPosition().x, (int)player.getPosition().y, GameData.player_width, GameData.player_height);
+            playerR = new Rectangle((int)player.getPositionEdge().x, (int)player.getPositionEdge().y, GameData.player_width, GameData.player_height);
 
             foreach(Enemy_normal enemy in enemy_normal)
             {
                 if (!enemy.exist) continue;
                 
-                enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                 interR = Rectangle.Intersect(playerR, enemyR);
                 if(!interR.IsEmpty)
@@ -596,7 +709,7 @@ namespace Infinite_War
             {
                 if (!enemy.exist) continue;
 
-                enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                 interR = Rectangle.Intersect(playerR, enemyR);
                 if (!interR.IsEmpty)
@@ -609,7 +722,7 @@ namespace Infinite_War
             {
                 if (!enemy.exist) continue;
 
-                enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                 interR = Rectangle.Intersect(playerR, enemyR);
                 if (!interR.IsEmpty)
@@ -622,7 +735,7 @@ namespace Infinite_War
             {
                 if (!enemy.exist) continue;
 
-                enemyR = new Rectangle((int)enemy.getPosition().x, (int)enemy.getPosition().y, enemy.getSize().width, enemy.getSize().height);
+                enemyR = new Rectangle((int)enemy.getPositionEdge().x, (int)enemy.getPositionEdge().y, enemy.getSize().width, enemy.getSize().height);
 
                 interR = Rectangle.Intersect(playerR, enemyR);
                 if (!interR.IsEmpty)
@@ -672,7 +785,6 @@ namespace Infinite_War
         }
         private void UpdateWeapons()
         {
-            int i;
             foreach(PlayerDagger weapon in player_dagger)
             {
                 if (weapon.exist == false) continue;
@@ -684,6 +796,11 @@ namespace Infinite_War
                 weapon.moveObject();
             }
             foreach (PlayerRpg weapon in player_rpg)
+            {
+                if (weapon.exist == false) continue;
+                weapon.moveObject();
+            }
+            foreach (PlayerRpgBomb weapon in player_rpg_bomb)
             {
                 if (weapon.exist == false) continue;
                 weapon.moveObject();
@@ -700,24 +817,6 @@ namespace Infinite_War
 
             //    player_dagger[i].moveObject();
             //}
-            //for (i = 0; i < GameData.MAX_BULLET; i++)
-            //{
-            //    if (player_bullet[i].exist == false) continue;
-
-            //    player_bullet[i].moveObject();
-            //}
-            //for (i = 0; i < GameData.MAX_RPG; i++)
-            //{
-            //    if (player_rpg[i].exist == false) continue;
-
-            //    player_rpg[i].moveObject();
-            //}
-            //for (i = 0; i < GameData.MAX_SWORD; i++)
-            //{
-            //    if (player_sword[i].exist == false) continue;
-
-            //    player_sword[i].moveObject();
-            //}
         }
 
         private void DaggerAttack()
@@ -732,10 +831,10 @@ namespace Infinite_War
             if (i != GameData.MAX_DAGGER)
             {
                 o_Vector direction;
-                direction.x = PointToClient(MousePosition).X - (player.getPosition().x + GameData.player_offset_x);
-                direction.y = PointToClient(MousePosition).Y - (player.getPosition().y + GameData.player_offset_y);
+                direction.x = PointToClient(MousePosition).X - (player.getPositionMid().x);
+                direction.y = PointToClient(MousePosition).Y - (player.getPositionMid().y);
                 player_dagger[i].exist = true;
-                player_dagger[i].SetObjectPosition(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y);
+                player_dagger[i].SetObjectPosition(player.getPositionMid().x, player.getPositionMid().y);
                 player_dagger[i].SetDirection(direction);
                 player_dagger[i].is_can_rotate = true;
             }
@@ -752,10 +851,10 @@ namespace Infinite_War
             if (i != GameData.MAX_BULLET)
             {
                 o_Vector direction;
-                direction.x = PointToClient(MousePosition).X - (player.getPosition().x + GameData.player_offset_x);
-                direction.y = PointToClient(MousePosition).Y - (player.getPosition().y + GameData.player_offset_y);
+                direction.x = PointToClient(MousePosition).X - (player.getPositionMid().x);
+                direction.y = PointToClient(MousePosition).Y - (player.getPositionMid().y);
                 player_bullet[i].exist = true;
-                player_bullet[i].SetObjectPosition(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y);
+                player_bullet[i].SetObjectPosition(player.getPositionMid().x, player.getPositionMid().y);
                 player_bullet[i].SetDirection(direction);
             }
         }
@@ -771,11 +870,27 @@ namespace Infinite_War
             if (i != GameData.MAX_RPG)
             {
                 o_Vector direction;
-                direction.x = PointToClient(MousePosition).X - (player.getPosition().x + GameData.player_offset_x);
-                direction.y = PointToClient(MousePosition).Y - (player.getPosition().y + GameData.player_offset_y);
+                direction.x = PointToClient(MousePosition).X - player.getPositionMid().x;
+                direction.y = PointToClient(MousePosition).Y - player.getPositionMid().y;
                 player_rpg[i].exist = true;
-                player_rpg[i].SetObjectPosition(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y);
+                player_rpg[i].SetObjectPosition(player.getPositionMid().x, player.getPositionMid().y);
                 player_rpg[i].SetDirection(direction);
+            }
+        }
+        private void RpgBombCreate(o_Point create_potision)
+        {
+            int i;
+            for (i = 0; i < GameData.MAX_BOMB; i++)
+            {
+                if (player_rpg_bomb[i].exist == false)
+                    break;
+            }
+
+            if (i != GameData.MAX_BOMB)
+            {
+                player_rpg_bomb[i].exist = true;
+                player_rpg_bomb[i].SetObjectPosition(create_potision.x - player_rpg_bomb[i].m_size.width / 2 ,
+                                                     create_potision.y - player_rpg_bomb[i].m_size.height / 2);
             }
         }
         private void SwordAttack()
@@ -790,7 +905,7 @@ namespace Infinite_War
             if (i != GameData.MAX_SWORD)
             {
                 player_sword[i].exist = true;
-                player_sword[i].SetObjectPosition(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y);
+                player_sword[i].SetObjectPosition(player.getPositionMid().x, player.getPositionMid().y);
                 player_sword[i].Charging(GameData.sword_charge);
                 Console.WriteLine("sword lange : " + player_sword[i].sword_range);
             }
@@ -804,6 +919,18 @@ namespace Infinite_War
         private void DrawWeapons(Graphics graphics)
         {
             int i;
+            var bullet_list = from weapons in player_bullet
+                              where weapons.exist == true
+                              select weapons;
+            var rpg_list = from weapons in player_rpg
+                           where weapons.exist == true
+                              select weapons;
+            var bomb_list = from weapons in player_rpg_bomb
+                            where weapons.exist == true
+                              select weapons;
+            var sword_list = from weapons in player_sword
+                             where weapons.exist == true
+                              select weapons;
             //draw
             for (i = 0; i < GameData.MAX_DAGGER; i++)
             {
@@ -811,30 +938,28 @@ namespace Infinite_War
 
                 if (player_dagger[i].is_can_rotate == true)
                 {
-                    player_dagger[i].angle = (float)GameMath.GetAngle(player.getPosition().x + GameData.player_offset_x, player.getPosition().y + GameData.player_offset_y, PointToClient(MousePosition).X, PointToClient(MousePosition).Y);
+                    player_dagger[i].angle = (float)GameMath.GetAngle(player.getPositionMid().x, player.getPositionMid().y, PointToClient(MousePosition).X, PointToClient(MousePosition).Y);
                     clone_dagger[i] = (Bitmap)dagger.Clone();
-                    clone_dagger[i] = RotateImage(clone_dagger[i], player_dagger[i].angle - 90);
+                    RotateImage(clone_dagger[i], player_dagger[i].angle - 90, out clone_dagger[i]);
                     player_dagger[i].is_can_rotate = false;
                 }
-                graphics.DrawImage(clone_dagger[i], player_dagger[i].getPosition().x, player_dagger[i].getPosition().y, GameData.dagger_width, GameData.dagger_height);
+                graphics.DrawImage(clone_dagger[i], player_dagger[i].getPositionEdge().x, player_dagger[i].getPositionEdge().y, GameData.dagger_width, GameData.dagger_height);
             }
-            for (i = 0; i < GameData.MAX_BULLET; i++)
+            foreach (PlayerBullet weapons in bullet_list)
             {
-                if (player_bullet[i].exist == false) continue;
-
-                graphics.DrawImage(bullet, player_bullet[i].getPosition().x, player_bullet[i].getPosition().y, GameData.bullet_width, GameData.bullet_height);
+                graphics.DrawImage(bullet, weapons.getPositionEdge().x, weapons.getPositionEdge().y, GameData.bullet_width, GameData.bullet_height);
             }
-            for (i = 0; i < GameData.MAX_RPG; i++)
+            foreach (PlayerRpg weapons in rpg_list)
             {
-                if (player_rpg[i].exist == false) continue;
-
-                graphics.DrawImage(bullet, player_rpg[i].getPosition().x, player_rpg[i].getPosition().y, GameData.rpg_bullet_width, GameData.rpg_buttet_height);
+                graphics.DrawImage(bullet, weapons.getPositionEdge().x, weapons.getPositionEdge().y, GameData.rpg_bullet_width, GameData.rpg_buttet_height);
             }
-            for (i = 0; i < GameData.MAX_SWORD; i++)
+            foreach(PlayerRpgBomb weapons in bomb_list)
             {
-                if (player_sword[i].exist == false) continue;
-
-                graphics.DrawImage(sword_range, player_sword[i].getPosition().x - (int)player_sword[i].sword_range / 2, player_sword[i].getPosition().y - (int)player_sword[i].sword_range / 2, (int)player_sword[i].sword_range, (int)player_sword[i].sword_range);
+                graphics.DrawImage(bomb, weapons.getPositionEdge().x, weapons.getPositionEdge().y, GameData.rpg_bomb_width, GameData.rpg_bomb_height);
+            }
+            foreach (PlayerSword weapons in sword_list)
+            {
+                graphics.DrawImage(sword_range, weapons.getPositionEdge().x - (int)weapons.sword_range / 2, weapons.getPositionEdge().y - (int)weapons.sword_range / 2, (int)weapons.sword_range, (int)weapons.sword_range);
             }
         }
 
@@ -1016,29 +1141,37 @@ namespace Infinite_War
 
         private void MoveEnemy()
         {
+            var enemy_normal_list = from enemyies in enemy_normal
+                                      where enemyies.exist == true
+                                      select enemyies;
+            var enemy_speed_list =  from enemyies in enemy_speed
+                                    where enemyies.exist == true
+                                      select enemyies;
+            var enemy_gun_list = from enemyies in enemy_gun
+                                 where enemyies.exist == true
+                                   select enemyies;
+            var enemy_shield_list = from enemyies in enemy_shield
+                                    where enemyies.exist == true
+                                   select enemyies;
             if (GameData.GetStage() >= GameData.lv1_stage)
-                foreach (Enemy_normal enemy in enemy_normal)
+                foreach (Enemy_normal enemy in enemy_normal_list)
                 {
-                    if (enemy.exist == false) continue;
-                    enemy.moveObject(player.getPosition());
+                    enemy.moveObject(player.getPositionMid());
                 }
             if (GameData.GetStage() >= GameData.lv2_stage)
-                foreach (Enemy_speed enemy in enemy_speed)
+                foreach (Enemy_speed enemy in enemy_speed_list)
                 {
-                    if (enemy.exist == false) continue;
-                    enemy.moveObject(player.getPosition());
+                    enemy.moveObject(player.getPositionMid());
                 }
             if (GameData.GetStage() >= GameData.lv3_stage)
-                foreach (Enemy_gun enemy in enemy_gun)
+                foreach (Enemy_gun enemy in enemy_gun_list)
                 {
-                    if (enemy.exist == false) continue;
-                    enemy.moveObject(player.getPosition());
+                    enemy.moveObject(player.getPositionMid());
                 }
             if (GameData.GetStage() >= GameData.lv4_stage)
-                foreach (Enemy_shield enemy in enemy_shield)
+                foreach (Enemy_shield enemy in enemy_shield_list)
                 {
-                    if (enemy.exist == false) continue;
-                    enemy.moveObject(player.getPosition());
+                    enemy.moveObject(player.getPositionMid());
                 }
         }
         private void DrawEnemy(Graphics graphics)
@@ -1048,41 +1181,40 @@ namespace Infinite_War
                 for(i = 0; i < GameData.MAX_ENEMY_NORMAL; i++)
                 {
                     if (enemy_normal[i].exist == false) continue;
-                    enemy_normal[i].angle = (float)GameMath.GetAngle(enemy_normal[i].getPosition().x, enemy_normal[i].getPosition().y, player.getPosition().x, player.getPosition().y);
+                    enemy_normal[i].angle = (float)GameMath.GetAngle(enemy_normal[i].getPositionMid().x, enemy_normal[i].getPositionMid().y, player.getPositionMid().x, player.getPositionMid().y);
                     clone_e_normal[i] = (Bitmap)e_normal.Clone();
-                    clone_e_normal[i] = RotateImage(clone_e_normal[i], enemy_normal[i].angle - 90);
-                    graphics.DrawImage(clone_e_normal[i], enemy_normal[i].getPosition().x, enemy_normal[i].getPosition().y, enemy_normal[i].m_size.width, enemy_normal[i].m_size.height);
+                    RotateImage(clone_e_normal[i], enemy_normal[i].angle - 90, out clone_e_normal[i]);
+                    graphics.DrawImage(clone_e_normal[i], enemy_normal[i].getPositionEdge().x, enemy_normal[i].getPositionEdge().y, enemy_normal[i].m_size.width, enemy_normal[i].m_size.height);
                 }
             if (GameData.GetStage() >= GameData.lv2_stage)
                 for (i = 0; i < GameData.MAX_ENEMY_SPEED; i++)
                 {
                     if (enemy_speed[i].exist == false) continue;
-                    enemy_speed[i].angle = (float)GameMath.GetAngle(enemy_speed[i].getPosition().x, enemy_speed[i].getPosition().y, player.getPosition().x, player.getPosition().y);
+                    enemy_speed[i].angle = (float)GameMath.GetAngle(enemy_speed[i].getPositionMid().x, enemy_speed[i].getPositionMid().y, player.getPositionMid().x, player.getPositionMid().y);
                     clone_e_speed[i] = (Bitmap)e_speed.Clone();
-                    clone_e_speed[i] = RotateImage(clone_e_speed[i], enemy_speed[i].angle - 90);
-                    graphics.DrawImage(clone_e_speed[i], enemy_speed[i].getPosition().x, enemy_speed[i].getPosition().y, enemy_speed[i].m_size.width, enemy_speed[i].m_size.height);
+                    RotateImage(clone_e_speed[i], enemy_speed[i].angle - 90, out clone_e_speed[i]);
+                    graphics.DrawImage(clone_e_speed[i], enemy_speed[i].getPositionEdge().x, enemy_speed[i].getPositionEdge().y, enemy_speed[i].m_size.width, enemy_speed[i].m_size.height);
                 }
 
             if (GameData.GetStage() >= GameData.lv3_stage)
                 for (i = 0; i < GameData.MAX_ENEMY_GUN; i++)
                 {
                     if (enemy_gun[i].exist == false) continue;
-                    enemy_gun[i].angle = (float)GameMath.GetAngle(enemy_gun[i].getPosition().x, enemy_gun[i].getPosition().y, player.getPosition().x, player.getPosition().y);
+                    enemy_gun[i].angle = (float)GameMath.GetAngle(enemy_gun[i].getPositionMid().x, enemy_gun[i].getPositionMid().y, player.getPositionMid().x, player.getPositionMid().y);
                     clone_e_gun[i] = (Bitmap)e_gun.Clone();
-                    clone_e_gun[i] = RotateImage(clone_e_gun[i], enemy_gun[i].angle - 90);
-                    graphics.DrawImage(clone_e_gun[i], enemy_gun[i].getPosition().x, enemy_gun[i].getPosition().y, enemy_gun[i].m_size.width, enemy_gun[i].m_size.height);
+                    RotateImage(clone_e_gun[i], enemy_gun[i].angle - 90, out clone_e_gun[i]);
+                    graphics.DrawImage(clone_e_gun[i], enemy_gun[i].getPositionEdge().x, enemy_gun[i].getPositionEdge().y, enemy_gun[i].m_size.width, enemy_gun[i].m_size.height);
                 }
             if (GameData.GetStage() >= GameData.lv4_stage)
                 for (i = 0; i < GameData.MAX_ENEMY_SHIELD; i++)
                 {
                     if (enemy_shield[i].exist == false) continue;
-                    enemy_shield[i].angle = (float)GameMath.GetAngle(enemy_shield[i].getPosition().x, enemy_shield[i].getPosition().y, player.getPosition().x, player.getPosition().y);
+                    enemy_shield[i].angle = (float)GameMath.GetAngle(enemy_shield[i].getPositionMid().x, enemy_shield[i].getPositionMid().y, player.getPositionMid().x, player.getPositionMid().y);
                     clone_e_shield[i] = (Bitmap)e_shield.Clone();
-                    clone_e_shield[i] = RotateImage(clone_e_shield[i], enemy_shield[i].angle - 90);
-                    graphics.DrawImage(clone_e_shield[i], enemy_shield[i].getPosition().x, enemy_shield[i].getPosition().y, enemy_shield[i].m_size.width, enemy_shield[i].m_size.height);
+                    RotateImage(clone_e_shield[i], enemy_shield[i].angle - 90, out clone_e_shield[i]);
+                    graphics.DrawImage(clone_e_shield[i], enemy_shield[i].getPositionEdge().x, enemy_shield[i].getPositionEdge().y, enemy_shield[i].m_size.width, enemy_shield[i].m_size.height);
                 }
         }
-
 
     }
 }
