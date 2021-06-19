@@ -100,5 +100,10 @@ namespace Infinite_War
             gameform.Show();
             this.Hide();
         }
+
+        private void Main_Activated(object sender, EventArgs e)
+        {
+            Load_record();
+        }
     }
 }

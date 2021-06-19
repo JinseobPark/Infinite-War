@@ -145,6 +145,7 @@ namespace Infinite_War
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "Main";
             this.Text = "Infinite War";
+            this.Activated += new System.EventHandler(this.Main_Activated);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();

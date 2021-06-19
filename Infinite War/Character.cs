@@ -18,7 +18,7 @@ namespace Infinite_War
         void moveObject();
         void SetDirection(o_Vector v);
     }
-    class Object : IObject
+    public class Object : IObject
     {
         public o_Point m_position;
         public o_Size m_size;
@@ -67,6 +67,11 @@ namespace Infinite_War
             m_position.x = _x;
             m_position.y = _y;
         }
+        public virtual void SetObjectPosition(o_Point position)
+        {
+            m_position.x = position.x;
+            m_position.y = position.y;
+        }
         public virtual o_Point getPositionEdge()
         {
             return m_position;
@@ -112,21 +117,20 @@ namespace Infinite_War
         {  }
     }
 
-    class Player : Object
+    public class Player : Object
     {
         private int HP { get; set; }
+        private int MaxHP { get; set; }
         public bool is_can_move { get; set; }
         public bool is_charging { get; set; }
-        //delegate void CharacterMove(float speed);
         Weapons cur_weapon;
-        WeaponRareUpList cur_weapon_up;
         public bool[] playerStatus = new bool[4] { false, false, false, false }; //up down left right
         public Player(float _x, float _y, int _w, int _h)
         {
             SetObject(_x, _y, _w, _h);
             cur_weapon = Weapons.DAGGER;
-            cur_weapon_up = WeaponRareUpList.NONE;
             HP = GameData.player_init_HP;
+            MaxHP = GameData.player_init_HP;
             exist = true;
             speed = GameData.getPlayerSpeed();
             is_can_move = true;
@@ -182,24 +186,6 @@ namespace Infinite_War
                     break;
             }
         }
-        public void Attack()
-        {
-            switch (cur_weapon)
-            {
-                case Weapons.DAGGER:
-                    //hello
-                    break;
-                case Weapons.GUN:
-                    //cur_weapon = Weapons.RPG;
-                    break;
-                case Weapons.RPG:
-                    //cur_weapon = Weapons.SWORD;
-                    break;
-                case Weapons.SWORD:
-                    //cur_weapon = Weapons.DAGGER;
-                    break;
-            }
-        }
         public int GetWeaponType()
         {
             switch (cur_weapon)
@@ -229,9 +215,32 @@ namespace Infinite_War
                     PlayerMoveRight(GameData.getPlayerSpeed());
             }
         }
+        
         public void hit()
         {
             HP--;
+            if (HP <= 0)
+                Death();
+        }
+        public void Death()
+        {
+            exist = false;
+        }
+        public void RecoverHP()
+        {
+            HP = MaxHP;
+        }
+        public void AddMaxHP()
+        {
+            MaxHP++;
+        }
+        public int GetPlayerHP()
+        {
+            return HP;
+        }
+        public int GetPlayerMaxHP()
+        {
+            return MaxHP;
         }
     }
 
@@ -259,9 +268,9 @@ namespace Infinite_War
         }
         public virtual void SetHP()
         {
-            HP = GameData.GetStage() * 3;
+            HP = GameData.GetStage() * 20;
         }
-        public virtual void Death()
+        public void Death()
         {
             exist = false;
             GameData.AddKill();
@@ -297,7 +306,7 @@ namespace Infinite_War
         }
         public override void SetHP()
         {
-            HP = GameData.GetStage() * 2;
+            HP = GameData.GetStage() * 15;
         }
     }
     class Enemy_gun : Enemy
@@ -308,7 +317,7 @@ namespace Infinite_War
         }
         public override void SetHP()
         {
-            HP = GameData.GetStage() * 2;
+            HP = GameData.GetStage() * 15;
         }
     }
     class Enemy_shield : Enemy
@@ -319,7 +328,7 @@ namespace Infinite_War
         }
         public override void SetHP()
         {
-            HP = GameData.GetStage() * 5;
+            HP = GameData.GetStage() * 40;
         }
     }
     class PlayerWeapon : Object
@@ -333,6 +342,7 @@ namespace Infinite_War
     class PlayerDagger : PlayerWeapon
     {
         public bool is_can_rotate;
+        public bool is_Up;
         public o_Vector distance_vector;
 
         public PlayerDagger()
@@ -340,33 +350,64 @@ namespace Infinite_War
             SetObjectSize(GameData.bullet_width, GameData.bullet_height);
             speed = 800.0f;
             is_can_rotate = false;
+            is_Up = false;
             distance_vector.x = 0.0f;
             distance_vector.y = 0.0f;
             damage = GameData.init_dagger_dammage;
         }
         public override void moveObject()
         {
-            if (distance_vector.SizeOfVector() <= GameData.dagger_distance)
+            if(is_Up)
             {
-                m_direction.normalize();
-                m_position.x += m_direction.x * speed * (float)GameMath.dt;
-                m_position.y += m_direction.y * speed * (float)GameMath.dt;
-                distance_vector.x += m_direction.x * speed * (float)GameMath.dt;
-                distance_vector.y += m_direction.y * speed * (float)GameMath.dt;
+                if (distance_vector.SizeOfVector() <= GameData.dagger_distance_up)
+                {
+                    m_direction.normalize();
+                    m_position.x += m_direction.x * speed * (float)GameMath.dt;
+                    m_position.y += m_direction.y * speed * (float)GameMath.dt;
+                    distance_vector.x += m_direction.x * speed * (float)GameMath.dt;
+                    distance_vector.y += m_direction.y * speed * (float)GameMath.dt;
+                }
+                else
+                {
+                    m_position.x = 0.0f;
+                    m_position.y = 0.0f;
+                    m_size.width = 0;
+                    m_size.height = 0;
+                    m_direction.x = 0.0f;
+                    m_direction.y = 0.0f;
+                    angle = 0.0f;
+                    exist = false;
+                    is_Up = false;
+                    is_can_rotate = false;
+                    distance_vector.x = 0.0f;
+                    distance_vector.y = 0.0f;
+                }
             }
             else
             {
-                m_position.x = 0.0f;
-                m_position.y = 0.0f;
-                m_size.width = 0;
-                m_size.height = 0;
-                m_direction.x = 0.0f;
-                m_direction.y = 0.0f;
-                angle = 0.0f;
-                exist = false;
-                is_can_rotate = false;
-                distance_vector.x = 0.0f;
-                distance_vector.y = 0.0f;
+                if (distance_vector.SizeOfVector() <= GameData.dagger_distance)
+                {
+                    m_direction.normalize();
+                    m_position.x += m_direction.x * speed * (float)GameMath.dt;
+                    m_position.y += m_direction.y * speed * (float)GameMath.dt;
+                    distance_vector.x += m_direction.x * speed * (float)GameMath.dt;
+                    distance_vector.y += m_direction.y * speed * (float)GameMath.dt;
+                }
+                else
+                {
+                    m_position.x = 0.0f;
+                    m_position.y = 0.0f;
+                    m_size.width = 0;
+                    m_size.height = 0;
+                    m_direction.x = 0.0f;
+                    m_direction.y = 0.0f;
+                    angle = 0.0f;
+                    exist = false;
+                    is_Up = false;
+                    is_can_rotate = false;
+                    distance_vector.x = 0.0f;
+                    distance_vector.y = 0.0f;
+                }
             }
         }
     }
@@ -422,11 +463,20 @@ namespace Infinite_War
         int bomb_range;
         public PlayerRpgBomb()
         {
-            SetObjectSize(GameData.rpg_bomb_width, GameData.rpg_bomb_height);
+            SetObjectSize(GameData.rpg_bomb_range, GameData.rpg_bomb_range);
             speed = 0.0f;
             damage = GameData.init_bomb_dammage;
             time_exist = 0.0;
-            bomb_range = GameData.rpg_bomb_height;
+            bomb_range = GameData.rpg_bomb_range;
+        }
+
+        public void UpgradeRpgBomb()
+        {
+            SetObjectSize(GameData.rpg_bomb_up_range, GameData.rpg_bomb_up_range);
+            speed = 0.0f;
+            damage = GameData.init_bomb_dammage;
+            time_exist = 0.0;
+            bomb_range = GameData.rpg_bomb_up_range;
         }
 
         public override void moveObject()

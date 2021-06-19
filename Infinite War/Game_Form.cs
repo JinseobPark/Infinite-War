@@ -17,9 +17,7 @@ namespace Infinite_War
     {
         DateTime StartTime = DateTime.Now, EndAttackTime = DateTime.Now;
         float attackTime;
-        bool is_TimeElapsed;
-        bool is_pause, must_select;
-        Stopwatch stoper = new Stopwatch();
+        bool is_pause, must_select, is_gaming;
         Bitmap Ground = new Bitmap(1200, 800);
         Bitmap bomb, bullet, dagger, e_normal, e_speed, e_gun, e_shield;
         Bitmap p_player, p_dagger, p_dagger_d, p_gun, p_gun_d, p_rpg, p_rpg_d, p_sword, sword_range;
@@ -47,6 +45,14 @@ namespace Infinite_War
 
         public delegate void del_drawingImages(Graphics graphic);
         public delegate void del_CheckColide();
+        public delegate void del_moves();
+
+        string ab_star_1 = "*", ab_star_2 = "*", ab_star_3 = "*";
+        string ab_name_1  = "1", ab_name_2  = "2", ab_name_3  = "3";
+        string ab_value_1 = "4", ab_value_2 = "5", ab_value_3 = "6";
+        string ab_add_1   = "7", ab_add_2   = "8", ab_add_3   = "9";
+        int ab_code_1 = 0, ab_code_2 = 0, ab_code_3 = 0;
+
 
         [DllImport("User32.dll")]
         private static extern short GetKeyState(int nVirtKey);
@@ -67,7 +73,7 @@ namespace Infinite_War
 
         private void Game_Form_MouseDown(object sender, MouseEventArgs e)
         {
-            if(attackTime > GameData.weapon_cool[player.GetWeaponType()])
+            if(attackTime > GameData.weapon_cool[player.GetWeaponType()] && !is_pause)
             {
                 Console.WriteLine("Attack");
                 playerAttack();
@@ -132,9 +138,11 @@ namespace Infinite_War
             GameData.init();
 
             InitWeapons();
-            is_TimeElapsed = true;
+            InitAbilities();
+            LevelUpBox.init();
             is_pause = false;
             must_select = false;
+            is_gaming = true;
             timer1.Start();
 
             Console.WriteLine("Load Data!\n");
@@ -157,15 +165,22 @@ namespace Infinite_War
             }
             if(e.KeyCode == Keys.Escape)
             {
-                if (is_TimeElapsed)
+                if(!is_gaming)
                 {
-                    //timer1.Stop();
-                    is_TimeElapsed = false;
+                    this.Close();
                 }
                 else
                 {
-                    //timer1.Enabled = true;
-                    is_TimeElapsed = true;
+                    if (!is_pause && !must_select)
+                    {
+                        is_pause = true;
+                        must_select = false;
+                    }
+                    else if (is_pause && !must_select)
+                    {
+                        is_pause = false;
+                        must_select = false;
+                    }
                 }
             }
 
@@ -173,6 +188,26 @@ namespace Infinite_War
             {
                 if (e.KeyCode == Keys.D1)
                 {
+                    LevelUpBox.ChooseAbility(ab_code_1, player);
+                    InitAbilities();
+                    Selecttype(out must_select, out is_pause);
+                }
+                if (e.KeyCode == Keys.D2)
+                {
+                    LevelUpBox.ChooseAbility(ab_code_2, player);
+                    InitAbilities();
+                    Selecttype(out must_select, out is_pause);
+                }
+                if (e.KeyCode == Keys.D3)
+                {
+                    LevelUpBox.ChooseAbility(ab_code_3, player);
+                    InitAbilities();
+                    Selecttype(out must_select, out is_pause);
+                }
+                if (e.KeyCode == Keys.D4)
+                {
+                    LevelUpBox.ChooseAbility(32, player);
+                    InitAbilities();
                     Selecttype(out must_select, out is_pause);
                 }
             }
@@ -180,7 +215,7 @@ namespace Infinite_War
             if (e.KeyCode == Keys.R)
             {
                 Console.WriteLine("move up");
-                GameData.Upgrade_move_up();
+                GameData.Upgrade_move_up(10);
             }
             if (e.KeyCode == Keys.T)
             {
@@ -251,59 +286,106 @@ namespace Infinite_War
                 DrawEnemy(grap);
                 DrawScore(grap);
                 DrawPlayer(grap);
+                DrawInfo(grap);
             };
             del_CheckColide checkColide = () =>
             {
                 CheckPlayerWithEnemy();
                 CheckBullet();
+                PlayerLiveCheck();
             };
-
-            if (is_pause == false)
+            del_moves objectMoves = () =>
             {
-                g_ground = Graphics.FromImage(Ground);
-                g_ground.Clear(Color.White);
-                EndAttackTime = DateTime.Now;
-                attackTime = (EndAttackTime.Ticks - StartTime.Ticks) / 10000000f;
-                CreateEnemy();
-
                 player.PlayerMove();
                 UpdateWeapons();
-                WeaponCharge();
                 MoveEnemy();
-                
-                Score.CheckNewRecord();
+                WeaponCharge();
+            };
 
-                checkColide();
-                //Draw
-                drawing(g_ground);
+            if (is_gaming)
+            {
+                if (!is_pause)
+                {
+                    g_ground = Graphics.FromImage(Ground);
+                    g_ground.Clear(Color.White);
+                    EndAttackTime = DateTime.Now;
+                    attackTime = (EndAttackTime.Ticks - StartTime.Ticks) / 10000000f;
+                    CreateEnemy();
 
-                LevelUp();
+                    objectMoves();
+                    checkColide();
+                    //Draw
+                    drawing(g_ground);
 
+                    Score.CheckNewRecord();
+                    LevelUp();
+
+                }
+                else
+                {
+                    if (must_select)
+                    {
+                        DrawLevelUp(g_ground);
+                    }
+                    else //pause
+                    {
+                        DrawPause(g_ground);
+                    }
+                }
             }
             else
             {
-
+                DrawPlayerDie(g_ground);
             }
             Invalidate();
         }
         private void LevelUp()
         {
-            if (GameData.GetKill() > 3 && GameData.GetStage() == 1)
+            if (GameData.GetKill() > GameData.GetStage()*3 )// && GameData.GetStage() == 1)
             {
                 GameData.StageUp();
                 ShowType(out must_select, out is_pause);
             }
         }
+        private void InitAbilities()
+        {
+            ab_star_1 = ""; ab_star_2 = ""; ab_star_3 = "";
+            ab_name_1 = ""; ab_name_2 = ""; ab_name_3 = "";
+            ab_value_1 = ""; ab_value_2 = ""; ab_value_3 = "";
+            ab_add_1 = ""; ab_add_2 = ""; ab_add_3 = "9";
+            ab_code_1 = 0; ab_code_2 = 0; ab_code_3 = 0;
+        }
+        private void RandomAbility(out string ab_star_, out string ab_name_, out string ab_value_, out string ab_add_, out int ab_code_)
+        {
+            AbilityBox ability = LevelUpBox.ShowLevelUpAbility();
+            ab_star_ = ability.type;
+            ab_name_ = ability.ab_name;
+            ab_value_ = ability.ab_value;
+            ab_add_ = ability.ab_add;
+            ab_code_ = ability.ab_code;
+        }
         private void ShowType(out bool select, out bool pause)
         {
+            RandomAbility(out ab_star_1, out ab_name_1, out ab_value_1, out ab_add_1, out ab_code_1);
+            RandomAbility(out ab_star_2, out ab_name_2, out ab_value_2, out ab_add_2, out ab_code_2);
+            RandomAbility(out ab_star_3, out ab_name_3, out ab_value_3, out ab_add_3, out ab_code_3);
             select = true;
             pause = true;
         }
         private void Selecttype(out bool select, out bool pause)
         {
-
             select = false;
             pause = false;
+        }
+        private void DrawInfo(Graphics graphics)
+        {
+            Font _font = new System.Drawing.Font(new FontFamily("Arial"), 10, FontStyle.Bold);
+            graphics.DrawString("Dagger : " + GameData.init_dagger_dammage.ToString() +
+                "\nGun : " + GameData.init_bullet_dammage.ToString() +
+                "\nRpg : " + GameData.init_bomb_dammage.ToString() +
+                "\nSword : " + GameData.init_sword_dammage.ToString() +
+                "\nHp : " + player.GetPlayerHP().ToString() + " / " + player.GetPlayerMaxHP().ToString()
+                , _font, Brushes.Black, new PointF(1000, 30));
         }
         private void DrawScore(Graphics graphics)
         {
@@ -318,6 +400,42 @@ namespace Infinite_War
             RotateImage(clone_player, player.angle - 100, out clone_player);
             graphics.DrawImage(clone_player, player.getPositionEdge().x, player.getPositionEdge().y, GameData.player_width, GameData.player_height);
         }
+        private void DrawLevelUp(Graphics graphics)
+        {
+            using(Brush brush = new SolidBrush(Color.Black))
+            {
+                graphics.FillRectangle(brush, 125, 200, 200, 400);
+                graphics.FillRectangle(brush, 475, 200, 200, 400);
+                graphics.FillRectangle(brush, 825, 200, 200, 400);
+                Font _font = new System.Drawing.Font(new FontFamily("Arial"), 10, FontStyle.Bold);
+
+                graphics.DrawString("  NUM 1   \n\n " + ab_star_1 + "\n\n " + ab_name_1 + "\n\n  " + ab_value_1 + "\n\n" + ab_add_1 + "\n", _font, Brushes.White, new PointF(150, 250));
+                graphics.DrawString("  NUM 2   \n\n " + ab_star_2 + "\n\n " + ab_name_2 + "\n\n  " + ab_value_2 + "\n\n" + ab_add_2 + "\n", _font, Brushes.White, new PointF(500, 250));
+                graphics.DrawString("  NUM 3   \n\n " + ab_star_3 + "\n\n " + ab_name_3 + "\n\n  " + ab_value_3 + "\n\n" + ab_add_3 + "\n", _font, Brushes.White, new PointF(850, 250));
+                graphics.DrawString("Choose Ability with keyboard numbers (1~3)", _font, Brushes.Black, new PointF(500, 100));
+            }
+        }
+        private void DrawPause(Graphics graphics)
+        {
+            using (Brush brush = new SolidBrush(Color.Black))
+            {
+                graphics.FillRectangle(brush, 200, 100, 800, 600);
+                Font _font = new System.Drawing.Font(new FontFamily("Arial"), 60, FontStyle.Bold);
+                graphics.DrawString("Pause", _font, Brushes.White, new PointF(500, 400));
+            }
+        }
+        private void DrawPlayerDie(Graphics graphics)
+        {
+            using (Brush brush = new SolidBrush(Color.Black))
+            {
+                graphics.FillRectangle(brush, 0, 0, 1200, 800);
+                Font _font = new System.Drawing.Font(new FontFamily("Arial"), 60, FontStyle.Bold);
+                graphics.DrawString("Die!", _font, Brushes.White, new PointF(500, 300));
+                Font _font2 = new System.Drawing.Font(new FontFamily("Arial"), 30, FontStyle.Bold);
+                graphics.DrawString("Esc to menu.", _font2, Brushes.White, new PointF(300, 550));
+            }
+        }
+
         private void RotateImage(Bitmap bmp, float angle, out Bitmap result)
         {
             Bitmap rotatedImage = new Bitmap(bmp.Width, bmp.Height);
@@ -749,20 +867,63 @@ namespace Infinite_War
 
         private void playerAttack()
         {
-            switch (player.GetWeaponType())
+            if (GameData.ab.is_RareSelected)
             {
-                case 0:
-                    DaggerAttack();
-                    break;
-                case 1:
-                    GunAttack();
-                    break;
-                case 2:
-                    RpgAttack();
-                    break;
-                case 3:
-                    SwordAttackCharge();
-                    break;
+                switch (player.GetWeaponType())
+                {
+                    case 0:
+                        if (GameData.ab.rare_up == WeaponRareUpList.DAGGER)
+                            DaggerAttackUP();
+                        else
+                            DaggerAttack();
+                        break;
+                    case 1:
+                        if (GameData.ab.rare_up == WeaponRareUpList.GUN)
+                            GunAttackUP();
+                        else
+                            GunAttack();
+                        break;
+                    case 2:
+                        if (GameData.ab.rare_up == WeaponRareUpList.RPG)
+                            RpgAttack();
+                        else
+                            RpgAttack();
+                        break;
+                    case 3:
+                        if (GameData.ab.rare_up == WeaponRareUpList.SWORD)
+                            SwordAttackCharge();
+                        else
+                            SwordAttackCharge();
+                        break;
+                }
+            }
+            else
+            {
+                switch (player.GetWeaponType())
+                {
+                    case 0:
+                        DaggerAttack();
+                        break;
+                    case 1:
+                        GunAttack();
+                        break;
+                    case 2:
+                        RpgAttack();
+                        break;
+                    case 3:
+                        SwordAttackCharge();
+                        break;
+                }
+            }
+        }
+        private void PlayerLiveCheck()
+        {
+            if (!player.exist)
+            {
+                Score.CheckNewRecord();
+                Score.SaveRecord();
+                is_pause = true;
+                is_gaming = false;
             }
         }
 
@@ -836,6 +997,47 @@ namespace Infinite_War
                 player_dagger[i].exist = true;
                 player_dagger[i].SetObjectPosition(player.getPositionMid().x, player.getPositionMid().y);
                 player_dagger[i].SetDirection(direction);
+                player_dagger[i].angle = (float)GameMath.GetAngle(player.getPositionMid().x, player.getPositionMid().y, PointToClient(MousePosition).X, PointToClient(MousePosition).Y);
+                player_dagger[i].is_can_rotate = true;
+            }
+        }
+        private void DaggerAttackUP()
+        {
+            int i;
+            for (i = 0; i < GameData.MAX_DAGGER; i++)
+            {
+                if (player_dagger[i].exist == false)
+                    break;
+            }
+            if (i != GameData.MAX_DAGGER)
+            {
+                o_Vector direction;
+                o_Point position_offset = new o_Point(16.0f * (float)Math.Cos(player.angle), 16.0f * (float)Math.Sin(player.angle));
+                direction.x = PointToClient(MousePosition).X - (player.getPositionMid().x + position_offset.x);
+                direction.y = PointToClient(MousePosition).Y - (player.getPositionMid().y + position_offset.y);
+                player_dagger[i].exist = true;
+                player_dagger[i].SetObjectPosition(player.getPositionMid().x + position_offset.x, player.getPositionMid().y + position_offset.y);
+                player_dagger[i].SetDirection(direction);
+                player_dagger[i].is_Up = true;
+                player_dagger[i].angle = (float)GameMath.GetAngle(player.getPositionMid().x + position_offset.x, player.getPositionMid().y + position_offset.y, PointToClient(MousePosition).X, PointToClient(MousePosition).Y);
+                player_dagger[i].is_can_rotate = true;
+            }
+            for (i = 0; i < GameData.MAX_DAGGER; i++)
+            {
+                if (player_dagger[i].exist == false)
+                    break;
+            }
+            if (i != GameData.MAX_DAGGER)
+            {
+                o_Vector direction;
+                o_Point position_offset = new o_Point(-16.0f * (float)Math.Cos(player.angle), -16.0f * (float)Math.Sin(player.angle));
+                direction.x = PointToClient(MousePosition).X - (player.getPositionMid().x + position_offset.x);
+                direction.y = PointToClient(MousePosition).Y - (player.getPositionMid().y + position_offset.y);
+                player_dagger[i].exist = true;
+                player_dagger[i].SetObjectPosition(player.getPositionMid().x + position_offset.x, player.getPositionMid().y + position_offset.y);
+                player_dagger[i].SetDirection(direction);
+                player_dagger[i].is_Up = true;
+                player_dagger[i].angle = (float)GameMath.GetAngle(player.getPositionMid().x + position_offset.x, player.getPositionMid().y + position_offset.y, PointToClient(MousePosition).X, PointToClient(MousePosition).Y);
                 player_dagger[i].is_can_rotate = true;
             }
         }
@@ -858,9 +1060,48 @@ namespace Infinite_War
                 player_bullet[i].SetDirection(direction);
             }
         }
+        private void GunAttackUP()
+        {
+            int i;
+            for (i = 0; i < GameData.MAX_BULLET; i++)
+            {
+                if (player_bullet[i].exist == false)
+                    break;
+            }
+            if (i != GameData.MAX_BULLET)
+            {
+                o_Vector direction;
+                o_Point position_offset = new o_Point(16.0f * (float)Math.Cos(player.angle), 16.0f * (float)Math.Sin(player.angle));
+                direction.x = PointToClient(MousePosition).X - (player.getPositionMid().x + position_offset.x);
+                direction.y = PointToClient(MousePosition).Y - (player.getPositionMid().y + position_offset.y);
+                player_bullet[i].exist = true;
+                player_bullet[i].SetObjectPosition(player.getPositionMid().x + position_offset.x, player.getPositionMid().y + position_offset.y);
+                player_bullet[i].SetDirection(direction);
+            }
+            for (i = 0; i < GameData.MAX_BULLET; i++)
+            {
+                if (player_bullet[i].exist == false)
+                    break;
+            }
+            if (i != GameData.MAX_BULLET)
+            {
+                o_Vector direction;
+                o_Point position_offset = new o_Point(-16.0f * (float)Math.Cos(player.angle), -16.0f * (float)Math.Sin(player.angle));
+                direction.x = PointToClient(MousePosition).X - (player.getPositionMid().x + position_offset.x);
+                direction.y = PointToClient(MousePosition).Y - (player.getPositionMid().y + position_offset.y);
+                player_bullet[i].exist = true;
+                player_bullet[i].SetObjectPosition(player.getPositionMid().x + position_offset.x, player.getPositionMid().y + position_offset.y);
+                player_bullet[i].SetDirection(direction);
+            }
+        }
         private void RpgAttack()
         {
             int i;
+            if (GameData.is_RpgUp_once())
+            {
+                RpgUp();
+                GameData.UpgradeRpgComplete();
+            }
             for (i = 0; i < GameData.MAX_RPG; i++)
             {
                 if (player_rpg[i].exist == false)
@@ -893,7 +1134,31 @@ namespace Infinite_War
                                                      create_potision.y - player_rpg_bomb[i].m_size.height / 2);
             }
         }
+        public void RpgUp()
+        {
+            foreach (PlayerRpgBomb bombs in player_rpg_bomb)
+            {
+                bombs.UpgradeRpgBomb();
+            }
+        }
         private void SwordAttack()
+        {
+            int i;
+            for (i = 0; i < GameData.MAX_SWORD; i++)
+            {
+                if (player_sword[i].exist == false)
+                    break;
+            }
+
+            if (i != GameData.MAX_SWORD)
+            {
+                player_sword[i].exist = true;
+                player_sword[i].SetObjectPosition(player.getPositionMid().x, player.getPositionMid().y);
+                player_sword[i].Charging(GameData.sword_charge);
+                Console.WriteLine("sword lange : " + player_sword[i].sword_range);
+            }
+        }
+        private void SwordAttackUP()
         {
             int i;
             for (i = 0; i < GameData.MAX_SWORD; i++)
@@ -938,7 +1203,6 @@ namespace Infinite_War
 
                 if (player_dagger[i].is_can_rotate == true)
                 {
-                    player_dagger[i].angle = (float)GameMath.GetAngle(player.getPositionMid().x, player.getPositionMid().y, PointToClient(MousePosition).X, PointToClient(MousePosition).Y);
                     clone_dagger[i] = (Bitmap)dagger.Clone();
                     RotateImage(clone_dagger[i], player_dagger[i].angle - 90, out clone_dagger[i]);
                     player_dagger[i].is_can_rotate = false;
@@ -955,7 +1219,7 @@ namespace Infinite_War
             }
             foreach(PlayerRpgBomb weapons in bomb_list)
             {
-                graphics.DrawImage(bomb, weapons.getPositionEdge().x, weapons.getPositionEdge().y, GameData.rpg_bomb_width, GameData.rpg_bomb_height);
+                graphics.DrawImage(bomb, weapons.getPositionEdge().x, weapons.getPositionEdge().y, weapons.getSize().width, weapons.getSize().height);
             }
             foreach (PlayerSword weapons in sword_list)
             {
@@ -973,7 +1237,7 @@ namespace Infinite_War
         private void CreateEnemy_normal()
         {
             int i;
-            if (random.Next(20) == 0)
+            if (random.Next(50) == 0)
             {
                 for (i = 0; i < GameData.MAX_ENEMY_NORMAL && enemy_normal[i].exist == true; i++)
                 {
@@ -1015,7 +1279,7 @@ namespace Infinite_War
         private void CreateEnemy_speed()
         {
             int i;
-            if (random.Next(20) == 0)
+            if (random.Next(70) == 0)
             {
                 for (i = 0; i < GameData.MAX_ENEMY_SPEED && enemy_speed[i].exist == true; i++)
                 {
@@ -1057,7 +1321,7 @@ namespace Infinite_War
         private void CreateEnemy_gun()
         {
             int i;
-            if (random.Next(20) == 0)
+            if (random.Next(80) == 0)
             {
                 for (i = 0; i < GameData.MAX_ENEMY_GUN && enemy_gun[i].exist == true; i++)
                 {
@@ -1099,7 +1363,7 @@ namespace Infinite_War
         private void CreateEnemy_shield()
         {
             int i;
-            if (random.Next(20) == 0)
+            if (random.Next(100) == 0)
             {
                 for (i = 0; i < GameData.MAX_ENEMY_SHIELD && enemy_shield[i].exist == true; i++)
                 {

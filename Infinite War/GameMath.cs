@@ -11,18 +11,18 @@ namespace Infinite_War
     {
         public float x;
         public float y;
-        o_Point(float _x, float _y)
+        public o_Point(float _x, float _y)
         {
             x = _x;
             y = _y;
         }
     }
-    struct o_Size
+    public struct o_Size
     {
         public int width;
         public int height;
     }
-    struct o_Vector
+    public struct o_Vector
     {
         public float x;
         public float y;
