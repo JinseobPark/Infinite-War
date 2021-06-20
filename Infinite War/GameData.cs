@@ -59,63 +59,54 @@ namespace Infinite_War
 
             AbilityBox temp = new AbilityBox();
 
-            temp.SetAbilityBox("*", "Damage Up", "10", "", 00);
+            temp.SetAbilityBox("  *", "Damage Up", "  10", "", 00);
             AbilityList[0].Add(temp); 
-            temp.SetAbilityBox("*", "Dagger Up", "20", "", 01);
+            temp.SetAbilityBox("  *", "Dagger Up", "  20", "", 01);
             AbilityList[0].Add(temp);
-            temp.SetAbilityBox("*", "Gun Up", "20", "", 02);
+            temp.SetAbilityBox("  *", "Gun Up", "  20", "", 02);
             AbilityList[0].Add(temp);
-            temp.SetAbilityBox("*", "RPG Up", "20", "", 03);
+            temp.SetAbilityBox("  *", "RPG Up", "  20", "", 03);
             AbilityList[0].Add(temp);
-            temp.SetAbilityBox("*", "Sword Up", "20", "", 04);
+            temp.SetAbilityBox("  *", "Sword Up", "  20", "", 04);
             AbilityList[0].Add(temp);
-            temp.SetAbilityBox("*", "Other probability Up", "", "", 05);
+            temp.SetAbilityBox("  *", "Other probability Up", "", "", 05);
             AbilityList[0].Add(temp);
 
 
-            temp.SetAbilityBox("**", "Recover HP", "", "", 10);
+            temp.SetAbilityBox("  **", "Recover HP", "", "", 10);
             AbilityList[1].Add(temp);
-            temp.SetAbilityBox("**", "Damage Up", "20", "", 11);
+            temp.SetAbilityBox("  **", "Damage Up", "  20", "", 11);
             AbilityList[1].Add(temp);
-            //temp.SetAbilityBox("**", "Dagger Up", "40", "");
-            //AbilityList[1].Add(temp);
-            //temp.SetAbilityBox("**", "Gun Up", "40", "");
-            //AbilityList[1].Add(temp);
-            //temp.SetAbilityBox("**", "RPG Up", "40", "");
-            //AbilityList[1].Add(temp);
-            //temp.SetAbilityBox("**", "Sword Up", "40", "");
-            //AbilityList[1].Add(temp);
-            temp.SetAbilityBox("**", "Movement Up", "10", "", 12);
+            temp.SetAbilityBox("  **", "Movement Up", "  10", "", 12);
             AbilityList[1].Add(temp);
 
 
-            temp.SetAbilityBox("***", "Movement Up", "20", "", 20);
+            temp.SetAbilityBox(" ***", "Movement Up", "  20", "", 20);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox("***", "Damage Up", "40", "", 21);
+            temp.SetAbilityBox(" ***", "Damage Up", "  40", "", 21);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox("***", "Max HP Up", "1", "", 22);
+            temp.SetAbilityBox(" ***", "Max HP Up", "  1", "", 22);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox("***", "Attack Speed Up", "10", "", 23);
+            temp.SetAbilityBox(" ***", "Attack Speed Up", "  10", "", 23);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox("**", "Dagger Up", "40", "", 24);
+            temp.SetAbilityBox(" ***", "Dagger Up", "  40", "", 24);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox("**", "Gun Up", "40", "", 25);
+            temp.SetAbilityBox(" ***", "Gun Up", "  40", "", 25);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox("**", "RPG Up", "40", "", 26);
+            temp.SetAbilityBox(" ***", "RPG Up", "  40", "", 26);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox("**", "Sword Up", "40", "", 27);
+            temp.SetAbilityBox(" ***", "Sword Up", "  40", "", 27);
             AbilityList[2].Add(temp);
 
 
-            temp.SetAbilityBox("****", "Dagger Up", "", "Long Range\n Double Throw", 30);
+            temp.SetAbilityBox(" ****", "Dagger Up", "", "Long Range\n Double Throw", 30);
             AbilityList[3].Add(temp);
-            temp.SetAbilityBox("****", "Gun Up", "", "Double Shot\n Rapid Fire", 31);
+            temp.SetAbilityBox(" ****", "Gun Up", "", "Double Shot\n Rapid Fire", 31);
             AbilityList[3].Add(temp);
-            temp.SetAbilityBox("****", "RPG Up", "", "Range Up", 32);
+            temp.SetAbilityBox(" ****", "RPG Up", "", "Range Up", 32);
             AbilityList[3].Add(temp);
-            temp.SetAbilityBox("****", "Sword Up", "", "Range Up\n More Charge", 33);
+            temp.SetAbilityBox(" ****", "Sword Up", "", "Range Up\n More Charge", 33);
             AbilityList[3].Add(temp);
-            //string hi = AbilityList[0][0].type;
 
             
         }
@@ -168,24 +159,6 @@ namespace Infinite_War
             AbilityBox result = new AbilityBox();
             int Random_rarity = LevelUp_Quality();
             result = AbilityUpList(Random_rarity);
-            //switch (LevelUp_Quality())
-            //{
-            //    case 0:
-            //        AbilityUpList(0);
-            //        break;
-            //    case 1:
-            //        AbilityUpList(1);
-            //        break;
-            //    case 2:
-            //        AbilityUpList(2);
-            //        break;
-            //    case 3:
-            //        AbilityUpList(3);
-            //        break;
-            //    default:
-            //        Console.WriteLine("no levelup selection. error.");
-            //        break;
-            //}
             return result;
         }
         static public AbilityBox HighAbilityUpList()
@@ -357,38 +330,45 @@ namespace Infinite_War
         public const int MAX_ENEMY_SPEED  = 20;
         public const int MAX_ENEMY_GUN    = 10;
         public const int MAX_ENEMY_SHIELD = 10;
+        public const int MAX_ENEMY_BULLET = 20;
 
         public const float enemy_speed = 100.0f;
         public const int player_init_HP = 3;
 
         public const int lv1_stage = 1;
         public const int lv2_stage = 5;
-        public const int lv3_stage = 10;
-        public const int lv4_stage = 15;
+        public const int lv3_stage = 15;
+        public const int lv4_stage = 25;
         //Dagger
         public const int dagger_width = 10;
         public const int dagger_height = 20;
         public const float dagger_distance = 150.0f;
         public const float dagger_distance_up = 250.0f;
-        static public int init_dagger_dammage = 50;
+        public const int init_dagger_dammage = 50;
+        static public int curr_dagger_dammage = 50;
         //Bullet
-        public const int bullet_width = 5;
-        public const int bullet_height = 5;
+        public const int bullet_width = 10;
+        public const int bullet_height = 10;
         public const float bullet_distance = 300.0f;
-        static public int init_bullet_dammage = 30;
+        public const int init_bullet_dammage = 30;
+        static public int curr_bullet_dammage = 30;
         //Rpg
-        public const int rpg_bullet_width = 10;
-        public const int rpg_buttet_height = 10;
+        public const int rpg_bullet_width = 15;
+        public const int rpg_buttet_height = 15;
         public const int rpg_bomb_range = 200;
         public const int rpg_bomb_up_range = 300;
-        static public int init_rpg_dammage = 1;
-        static public int init_bomb_dammage = 80;
+        public const int init_rpg_dammage = 1;
+        static public int curr_rpg_dammage = 1;
+        public const int init_bomb_dammage = 80;
+        static public int curr_bomb_dammage = 80;
         public const double bomb_timer = 0.2;
         //sword
         public const int sword_max_range = 300;
+        public const int sword_max_range_up = 450;
         public const double sword_timer = 0.2;
         static public double sword_charge = 0.0;
-        static public int init_sword_dammage = 10;
+        public const int init_sword_dammage = 100;
+        static public int curr_sword_dammage = 100;
 
         public const int varWeaponType = 4;
 
@@ -428,10 +408,16 @@ namespace Infinite_War
             weapon_cool[0] = 1.0f;
             weapon_cool[1] = 1.0f;
             weapon_cool[2] = 1.5f;
-            weapon_cool[3] = 0.3f;
+            weapon_cool[3] = 0.1f;
+
+            curr_dagger_dammage = init_dagger_dammage ;
+            curr_bullet_dammage = init_bullet_dammage ; 
+            curr_rpg_dammage    = init_rpg_dammage    ;
+            curr_bomb_dammage   = init_bomb_dammage   ;
+            curr_sword_dammage  = init_sword_dammage  ;
 
             is_rpg_up = false;
-            player_speed = 200.0f;
+            player_speed = 250.0f;
         }
         static public void StageUp()
         {
@@ -448,33 +434,33 @@ namespace Infinite_War
         static public void Upgrade_damage_up(int value)
         {
             ab.damage_up += 1;
-            init_dagger_dammage += (int)(init_dagger_dammage * value * 0.01 );
-            init_bullet_dammage += (int)(init_bullet_dammage * value * 0.01);
-            init_rpg_dammage += (int)(init_rpg_dammage * value * 0.01);
-            init_bomb_dammage += (int)(init_bomb_dammage * value * 0.01);
-            init_sword_dammage += (int)(init_sword_dammage * value * 0.01);
+            curr_dagger_dammage += (int)(init_dagger_dammage * value * 0.01 );
+            curr_bullet_dammage += (int)(init_bullet_dammage * value * 0.01);
+            curr_rpg_dammage += (int)(init_rpg_dammage * value * 0.01);
+            curr_bomb_dammage += (int)(init_bomb_dammage * value * 0.01);
+            curr_sword_dammage += (int)(init_sword_dammage * value * 0.01);
         }
         static public void Upgrade_dagger_up(int value)
         {
             ab.dagger_up += 1;
-            init_dagger_dammage += (int)(init_dagger_dammage * value * 0.01);
+            curr_dagger_dammage += (int)(init_dagger_dammage * value * 0.01);
         }
         
         static public void Upgrade_gun_up(int value)
         {
             ab.gun_up += 1;
-            init_bullet_dammage += (int)(init_bullet_dammage * value * 0.01);
+            curr_bullet_dammage += (int)(init_bullet_dammage * value * 0.01);
         }
         static public void Upgrade_rpg_up(int value)
         {
             ab.rpg_up += 1;
-            init_rpg_dammage += (int)(init_rpg_dammage * value * 0.01);
-            init_bomb_dammage += (int)(init_bomb_dammage * value * 0.01);
+            curr_rpg_dammage += (int)(init_rpg_dammage * value * 0.01);
+            curr_bomb_dammage += (int)(init_bomb_dammage * value * 0.01);
         }
         static public void Upgrade_sword_up(int value)
         {
             ab.sword_up += 1;
-            init_sword_dammage += (int)(init_sword_dammage * value * 0.01);
+            curr_sword_dammage += (int)(init_sword_dammage * value * 0.01);
         }
         static public void Upgrade_prob_up()
         {
@@ -535,9 +521,6 @@ namespace Infinite_War
             if(is_rpg_up)
             is_rpg_up = false;
         }
-
-
-
 
     }
     

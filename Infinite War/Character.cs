@@ -331,6 +331,45 @@ namespace Infinite_War
             HP = GameData.GetStage() * 40;
         }
     }
+    class EnemyBullet : Object
+    {
+        public o_Vector distance_vector;
+        public EnemyBullet()
+        {
+            SetObjectSize(GameData.bullet_width, GameData.bullet_height);
+            speed = 1000.0f;
+            distance_vector.x = 0.0f;
+            distance_vector.y = 0.0f;
+        }
+        public override void moveObject()
+        {
+            if (distance_vector.SizeOfVector() <= GameData.bullet_distance)
+            {
+                m_direction.normalize();
+                m_position.x += m_direction.x * speed * (float)GameMath.dt;
+                m_position.y += m_direction.y * speed * (float)GameMath.dt;
+                distance_vector.x += m_direction.x * speed * (float)GameMath.dt;
+                distance_vector.y += m_direction.y * speed * (float)GameMath.dt;
+            }
+            else
+            {
+                m_position.x = 0.0f;
+                m_position.y = 0.0f;
+                m_size.width = 0;
+                m_size.height = 0;
+                m_direction.x = 0.0f;
+                m_direction.y = 0.0f;
+                angle = 0.0f;
+                exist = false;
+                distance_vector.x = 0.0f;
+                distance_vector.y = 0.0f;
+            }
+        }
+        public void AttackSuccess()
+        {
+            exist = false;
+        }
+    }
     class PlayerWeapon : Object
     {
         public int damage;
@@ -533,9 +572,15 @@ namespace Infinite_War
         }
         public void Charging(double charged)
         {
-            sword_range = charged * 1000.0;
+            sword_range = charged * 1500.0;
             if (sword_range > GameData.sword_max_range)
                 sword_range = GameData.sword_max_range;
+        }
+        public void ChargingUp(double charged)
+        {
+            sword_range = charged * 2500.0;
+            if (sword_range > GameData.sword_max_range_up)
+                sword_range = GameData.sword_max_range_up;
         }
         public double get_sword_range()
         {
