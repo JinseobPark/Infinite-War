@@ -67,7 +67,7 @@ namespace Infinite_War
             this.toolStripMenu_StartGame.Name = "toolStripMenu_StartGame";
             this.toolStripMenu_StartGame.Size = new System.Drawing.Size(122, 22);
             this.toolStripMenu_StartGame.Text = "게임시작";
-            this.toolStripMenu_StartGame.Click += new System.EventHandler(this.toolStripMenu_GoMain_Click);
+            this.toolStripMenu_StartGame.Click += new System.EventHandler(this.toolStripMenu_GameStart_Click);
             // 
             // toolStripMenu_Option
             // 

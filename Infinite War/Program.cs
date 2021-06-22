@@ -9,7 +9,7 @@ using System.Windows;
 
 namespace Infinite_War
 {
-    static class NativeMethods
+    static class NativeMethods      //Console Write를 쓰기위해 도입
     {
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -27,7 +27,7 @@ namespace Infinite_War
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            NativeMethods.AllocConsole();
+            //NativeMethods.AllocConsole();
             Application.Run(new Main());
         }
     }
