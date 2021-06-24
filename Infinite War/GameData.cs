@@ -262,7 +262,7 @@ namespace Infinite_War
         static public void SaveRecord()     //신기록 저장
         {
             string score = getRecordScore().ToString();
-            using (StreamWriter sw = new StreamWriter("../../../record.txt"))
+            using (StreamWriter sw = new StreamWriter("record.txt"))
             {
                 sw.Write(score);
                 sw.Close();

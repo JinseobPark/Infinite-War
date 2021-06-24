@@ -32,7 +32,7 @@ namespace Infinite_War
 
             try
             {
-                StreamReader sr = new StreamReader("../../../record.txt");  //record.txt을 가져오기
+                StreamReader sr = new StreamReader("record.txt");  //record.txt을 가져오기
                 label_record_count.Text = sr.ReadToEnd();                   //읽고
                 Score.SetRecordScore(int.Parse(label_record_count.Text));   //그 내용을 int로 전달하고 저장
                 sr.Close();                                                 //다읽음
@@ -40,7 +40,7 @@ namespace Infinite_War
             catch (Exception ex)                                            //실패했다면
             {
                 string message = "Exception Type : " + ex.GetType() + "\nMessage : " + ex.Message + "\nStack Trace : " + ex.StackTrace + "\n\n";    //왜 실패했는지
-                using (FileStream fs = new FileStream("../../../error.log", FileMode.Append))   //기록으로 남겨
+                using (FileStream fs = new FileStream("error.log", FileMode.Append))   //기록으로 남겨
                 {
                     string time = "Error Time : " + DateTime.Now.ToString() + "\n";     //시간도 함께
                     BinaryFormatter bf = new BinaryFormatter();                         //바이너리 파일로
@@ -54,7 +54,7 @@ namespace Infinite_War
         private void Save_record()
         {
             label_record_count.Text = Score.getRecordScore().ToString();        //지금 점수를 텍스트로 전환
-            using (StreamWriter sw = new StreamWriter("../../../record.txt"))   //이 파일에 저장할 계획
+            using (StreamWriter sw = new StreamWriter("record.txt"))   //이 파일에 저장할 계획
             {
                 sw.Write(label_record_count.Text);                              //쓰자
                 sw.Close();

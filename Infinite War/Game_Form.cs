@@ -165,14 +165,14 @@ namespace Infinite_War
         {
             try //mp3파일 가져오기 시도
             {
-                mciSendString("open \"" + "../../../Resources/InfiniteWar_BGM.mp3" + "\" type mpegvideo alias MediaFile", null, 0, IntPtr.Zero); //여기 파일 열어주세요
+                mciSendString("open \"" + "Resources/InfiniteWar_BGM.mp3" + "\" type mpegvideo alias MediaFile", null, 0, IntPtr.Zero); //여기 파일 열어주세요
                 mciSendString("play MediaFile REPEAT", null, 0, IntPtr.Zero);                               //무한으로 즐겨요
                 mciSendString("setaudio MediaFile volume to " + volume.ToString(), null, 0, IntPtr.Zero);   //불륨조전
             }
             catch (Exception ex) //실패시 catch 
             {
                 string message = "Exception Type : " + ex.GetType() + "\nMessage : " + ex.Message + "\nStack Trace : " + ex.StackTrace + "\n\n"; //메세지내용
-                using (FileStream fs = new FileStream("../../../error.log", FileMode.Append)) //log저장
+                using (FileStream fs = new FileStream("error.log", FileMode.Append)) //log저장
                 {
                     string time = "Error Time : " + DateTime.Now.ToString() + "\n"; //시간도 같이 저장해요
                     BinaryFormatter bf = new BinaryFormatter();
