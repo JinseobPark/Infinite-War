@@ -23,6 +23,7 @@ namespace Infinite_War
         {
             Score.SetRecordScore(0);;       //일단 0점으로 초기화시켜놓음
             Load_record();                  //그리고 기록을 로드
+            label_ControlKey.Text = "     Key Control\n\nWASD            :  Move\nSpace bar        :  Change Weapon\nAttack             : Mouse\nNumber 1 2 3  : Select Ability\n\nESC                : PAUSE";
         }
 
         private void Load_record()          //신기록 로드
@@ -33,7 +34,7 @@ namespace Infinite_War
             {
                 StreamReader sr = new StreamReader("../../../record.txt");  //record.txt을 가져오기
                 label_record_count.Text = sr.ReadToEnd();                   //읽고
-                Score.SetRecordScore(int.Parse(label_record_count.Text));   //그 내용을 int로 전달
+                Score.SetRecordScore(int.Parse(label_record_count.Text));   //그 내용을 int로 전달하고 저장
                 sr.Close();                                                 //다읽음
             }
             catch (Exception ex)                                            //실패했다면
@@ -67,7 +68,7 @@ namespace Infinite_War
 
         private void toolStripMenu_Option_Click(object sender, EventArgs e)     //메뉴 - 옵션
         {
-            if(Application.OpenForms["Option_form"] as Option_form == null)     //옵션의 폼이 없다면 열어
+            if(Application.OpenForms["Option_form"] as Option_form == null)     //옵션의 폼이 없다면 열기
             {
                 Option_form option_form = new Option_form();                    //새로운 옵션 폼 오픈
                 option_form.Show();

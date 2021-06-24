@@ -39,6 +39,7 @@ namespace Infinite_War
             this.button_gamestart = new System.Windows.Forms.Button();
             this.button_option = new System.Windows.Forms.Button();
             this.button_exit = new System.Windows.Forms.Button();
+            this.label_ControlKey = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -48,7 +49,7 @@ namespace Infinite_War
             this.toolStripMenu});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(332, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(375, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -131,11 +132,21 @@ namespace Infinite_War
             this.button_exit.UseVisualStyleBackColor = true;
             this.button_exit.Click += new System.EventHandler(this.button_exit_Click);
             // 
+            // label_ControlKey
+            // 
+            this.label_ControlKey.AutoSize = true;
+            this.label_ControlKey.Location = new System.Drawing.Point(164, 111);
+            this.label_ControlKey.Name = "label_ControlKey";
+            this.label_ControlKey.Size = new System.Drawing.Size(47, 15);
+            this.label_ControlKey.TabIndex = 6;
+            this.label_ControlKey.Text = "키 조작";
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(332, 262);
+            this.ClientSize = new System.Drawing.Size(375, 262);
+            this.Controls.Add(this.label_ControlKey);
             this.Controls.Add(this.button_exit);
             this.Controls.Add(this.button_option);
             this.Controls.Add(this.button_gamestart);
@@ -166,6 +177,7 @@ namespace Infinite_War
         private System.Windows.Forms.Button button_gamestart;
         private System.Windows.Forms.Button button_option;
         private System.Windows.Forms.Button button_exit;
+        private System.Windows.Forms.Label label_ControlKey;
     }
 }
 

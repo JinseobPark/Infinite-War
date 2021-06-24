@@ -15,7 +15,6 @@ namespace Infinite_War
             {
                 array[i] = new T();
             }
-
             return array;
         }
     }

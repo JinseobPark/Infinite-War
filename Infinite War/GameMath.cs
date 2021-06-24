@@ -35,7 +35,10 @@ namespace Infinite_War
         public float SizeOfVector()         //벡터의 크기
         {
             float result;
-            result = (float)Math.Sqrt(x * x + y * y);
+            float _x = Math.Abs(x);
+            float _y = Math.Abs(y);
+
+            result = (float)Math.Sqrt((_x * _x) + (_y * _y));
             return result;
         }
         public void normalize()             //벡터의 정규화

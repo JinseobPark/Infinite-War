@@ -233,6 +233,7 @@ namespace Infinite_War
         public void AddMaxHP()              //최대 체력 증가!
         {
             MaxHP++;                        //사실 고작 1증가
+            HP++;                           //현재 체력도 1증가
         }
         public int GetPlayerHP()            //현재 체력 겟
         {
@@ -247,6 +248,7 @@ namespace Infinite_War
     class Enemy : Object
     {
         public int HP;  //적 체력
+        public int MaxHP;
 
         public Enemy()  //초기화
         {
@@ -256,17 +258,18 @@ namespace Infinite_War
             speed = GameData.enemy_speed;
         }
         ~Enemy() { }    //죽음화
-        public virtual void hit(int damage) //데미지 입었을때
-        {
-            HP -= damage;   //데미지 입음
-            if(HP <= 0)         
-            {
-                Death();    //듀금
-            }
-        }
         public virtual void SetHP() //체력 설정
         {
             HP = GameData.GetStage() * 20;
+            MaxHP = HP;
+        }
+        public virtual void hit(int damage) //데미지 입었을때
+        {
+            HP -= damage;   //데미지 입음
+            if (HP <= 0)
+            {
+                Death();    //듀금
+            }
         }
         public void Death()         //듀금
         {
@@ -274,7 +277,7 @@ namespace Infinite_War
             GameData.AddKill();     //주님 한명 더 갑니다
         }
         public void AttackSuccess() //적 : 임무 성공
-        {
+        {     
             exist = false;          //임무 성공하여 자결
         }
 
@@ -286,7 +289,14 @@ namespace Infinite_War
             m_position.x += m_direction.x * speed * (float)GameMath.dt;
             m_position.y += m_direction.y * speed * (float)GameMath.dt;
         }
-
+        public int GetCurHP()
+        {
+            return HP;
+        }
+        public int GetMaxHP()
+        {
+            return MaxHP;
+        }
     }
 
     class Enemy_normal : Enemy          //일반 적
@@ -304,6 +314,7 @@ namespace Infinite_War
         public override void SetHP()    //하지만 약해요
         {
             HP = GameData.GetStage() * 15;
+            MaxHP = HP;
         }
     }
     class Enemy_gun : Enemy             //총 든적
@@ -315,6 +326,7 @@ namespace Infinite_War
         public override void SetHP()    //하지만 약해요
         {
             HP = GameData.GetStage() * 15;
+            MaxHP = HP;
         }
     }
     class Enemy_shield : Enemy          //방패 든 적
@@ -325,7 +337,8 @@ namespace Infinite_War
         }
         public override void SetHP()    //대신 잘 버텨요
         {
-            HP = GameData.GetStage() * 40;
+            HP = GameData.GetStage() * 30;
+            MaxHP = HP;
         }
     }
     class EnemyBullet : Object          //적의 총알
@@ -364,7 +377,14 @@ namespace Infinite_War
         }
         public void AttackSuccess()         //여행 성공! 임무 성공!
         {
-            exist = false;                  
+            m_position.x = 0.0f;
+            m_position.y = 0.0f;
+            m_size.width = 0;
+            m_size.height = 0;
+            m_direction.x = 0.0f;
+            m_direction.y = 0.0f;
+            angle = 0.0f;
+            exist = false;
         }
     }
     class PlayerWeapon : Object         //플레이어 무기
@@ -373,6 +393,17 @@ namespace Infinite_War
         public int getDammage()         //데미지 겟
         {
             return damage;
+        }
+        public virtual void AttackSuccess()
+        {
+            m_position.x = 0.0f;
+            m_position.y = 0.0f;
+            m_size.width = 0;
+            m_size.height = 0;
+            m_direction.x = 0.0f;
+            m_direction.y = 0.0f;
+            angle = 0.0f;
+            exist = false;
         }
     }
     class PlayerDagger : PlayerWeapon        //대거 무기
@@ -446,6 +477,21 @@ namespace Infinite_War
                 }
             }
         }
+        public override void AttackSuccess()
+        {
+            m_position.x = 0.0f;
+            m_position.y = 0.0f;
+            m_size.width = 0;
+            m_size.height = 0;
+            m_direction.x = 0.0f;
+            m_direction.y = 0.0f;
+            angle = 0.0f;
+            exist = false;
+            is_Up = false;
+            is_can_rotate = false;
+            distance_vector.x = 0.0f;
+            distance_vector.y = 0.0f;
+        }
     }
     class PlayerBullet : PlayerWeapon       //총알 무기
     {
@@ -481,6 +527,19 @@ namespace Infinite_War
                 distance_vector.x = 0.0f;
                 distance_vector.y = 0.0f;
             }
+        }
+        public override void AttackSuccess()
+        {
+            m_position.x = 0.0f;
+            m_position.y = 0.0f;
+            m_size.width = 0;
+            m_size.height = 0;
+            m_direction.x = 0.0f;
+            m_direction.y = 0.0f;
+            angle = 0.0f;
+            exist = false;
+            distance_vector.x = 0.0f;
+            distance_vector.y = 0.0f;
         }
 
     }

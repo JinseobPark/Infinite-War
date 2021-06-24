@@ -217,9 +217,9 @@ namespace Infinite_War
                 player.playerStatus[3] = true;
             if (e.KeyCode == Keys.Space) //space키는 무기 변경
             {
-                player.ChangeWeapon(); //무기변경
+                player.ChangeWeapon();                           //무기변경
                 ChangeImagePlayerWeapon(player.GetWeaponType()); //바뀐 무기에 따라 플레이어 이미지도 변경
-                if (is_eff_sound) s_switch.Play(); //무기 전환 사운드
+                if (is_eff_sound) s_switch.Play();               //무기 전환 사운드
             }
             if(e.KeyCode == Keys.Escape) // ESC키는 Pause, exit
             {
@@ -405,7 +405,6 @@ namespace Infinite_War
                     checkColide();              //충돌 델리게이트
                     drawing(g_ground);          //draw 델리게이트
 
-                    Score.CheckNewRecord();     //신기록 체커
                     LevelUp();                  //킬수에 따라 스테이지 업
                 }
                 else
@@ -565,6 +564,14 @@ namespace Infinite_War
                 }
             }
         }
+        private void DrawHPBar(Graphics graphics, o_Point position, int HP, int MaxHP)  //적 HP바 드로우
+        {
+            float HPpersent = 64 * HP / MaxHP;
+            using (Brush brush = new SolidBrush(Color.Red))         //빨간 체력바
+            {
+                graphics.FillRectangle(brush, position.x, position.y - 5, HPpersent, 5);    //적의 위쪽에 빨간 체력바 드로우
+            }
+        }
         private void DrawEnemy(Graphics graphics)                   //적 드로우
         {
             int i;
@@ -576,6 +583,7 @@ namespace Infinite_War
                     clone_e_normal[i] = (Bitmap)e_normal.Clone();   //지금 적을 클론으로 가져옴
                     RotateImage(clone_e_normal[i], enemy_normal[i].angle - 90, out clone_e_normal[i]);  //플레이어를 바라보도록 회전
                     graphics.DrawImage(clone_e_normal[i], enemy_normal[i].getPositionEdge().x, enemy_normal[i].getPositionEdge().y, enemy_normal[i].m_size.width, enemy_normal[i].m_size.height);
+                    DrawHPBar(graphics, enemy_normal[i].getPositionEdge(), enemy_normal[i].GetCurHP(), enemy_normal[i].GetMaxHP()); //HP바 생성, 그리기
                 }
             if (GameData.GetStage() >= GameData.lv2_stage)          //밑으로는 각 타입별로 각 스테이지별 드로우
                 for (i = 0; i < GameData.MAX_ENEMY_SPEED; i++)
@@ -585,6 +593,7 @@ namespace Infinite_War
                     clone_e_speed[i] = (Bitmap)e_speed.Clone();
                     RotateImage(clone_e_speed[i], enemy_speed[i].angle - 90, out clone_e_speed[i]);
                     graphics.DrawImage(clone_e_speed[i], enemy_speed[i].getPositionEdge().x, enemy_speed[i].getPositionEdge().y, enemy_speed[i].m_size.width, enemy_speed[i].m_size.height);
+                    DrawHPBar(graphics, enemy_speed[i].getPositionEdge(), enemy_speed[i].GetCurHP(), enemy_speed[i].GetMaxHP()); //HP바 생성, 그리기
                 }
 
             if (GameData.GetStage() >= GameData.lv3_stage)
@@ -596,11 +605,12 @@ namespace Infinite_War
                     clone_e_gun[i] = (Bitmap)e_gun.Clone();
                     RotateImage(clone_e_gun[i], enemy_gun[i].angle - 90, out clone_e_gun[i]);
                     graphics.DrawImage(clone_e_gun[i], enemy_gun[i].getPositionEdge().x, enemy_gun[i].getPositionEdge().y, enemy_gun[i].m_size.width, enemy_gun[i].m_size.height);
+                    DrawHPBar(graphics, enemy_gun[i].getPositionEdge(), enemy_gun[i].GetCurHP(), enemy_gun[i].GetMaxHP()); //HP바 생성, 그리기
                 }
-                var enemy_bullet_list = from bullet in enemy_bullet     //존재하는 불릿을 linq로 가져옴
-                                        where bullet.exist == true
-                                        select bullet;
-                foreach (EnemyBullet bullets in enemy_bullet)           //가져온 linq를 모두 드로우
+                var enemy_bullet_list = from bullets in enemy_bullet     //존재하는 불릿을 linq로 가져옴
+                                        where bullets.exist == true
+                                        select bullets;
+                foreach (EnemyBullet bullets in enemy_bullet_list)           //가져온 linq를 모두 드로우
                 {
                     graphics.DrawImage(e_bullet, bullets.getPositionEdge().x, bullets.getPositionEdge().y, GameData.bullet_width, GameData.bullet_height);
                 }
@@ -613,6 +623,7 @@ namespace Infinite_War
                     clone_e_shield[i] = (Bitmap)e_shield.Clone();
                     RotateImage(clone_e_shield[i], enemy_shield[i].angle - 90, out clone_e_shield[i]);
                     graphics.DrawImage(clone_e_shield[i], enemy_shield[i].getPositionEdge().x, enemy_shield[i].getPositionEdge().y, enemy_shield[i].m_size.width, enemy_shield[i].m_size.height);
+                    DrawHPBar(graphics, enemy_shield[i].getPositionEdge(), enemy_shield[i].GetCurHP(), enemy_shield[i].GetMaxHP()); //HP바 생성, 그리기
                 }
         }
         private void DrawWeapons(Graphics graphics)                 //무기 드로우
@@ -642,6 +653,7 @@ namespace Infinite_War
                     player_dagger[i].is_can_rotate = false;
                 }
                 graphics.DrawImage(clone_dagger[i], player_dagger[i].getPositionEdge().x, player_dagger[i].getPositionEdge().y, GameData.dagger_width, GameData.dagger_height);
+                Console.WriteLine(i + " Dagger : "+ player_dagger[i].distance_vector.SizeOfVector());
             }
             foreach (PlayerBullet weapons in bullet_list)           //각 존재하는 리스트들을 드로우
             {
@@ -660,7 +672,6 @@ namespace Infinite_War
                 graphics.DrawImage(sword_range, weapons.getPositionEdge().x - (int)weapons.sword_range / 2, weapons.getPositionEdge().y - (int)weapons.sword_range / 2, (int)weapons.sword_range, (int)weapons.sword_range);
             }
         }
-
         private void RotateImage(Bitmap bmp, float angle, out Bitmap result)    //이미지 회전 함수. (회전할 이미지, 회전할 각도, out 회전한 결과)
         {
             Bitmap rotatedImage = new Bitmap(bmp.Width, bmp.Height);            //회전할 이미지를 새로 설정. 도화지 사이즈 설정 (도화지 자체를 회전하는 방식)
@@ -674,15 +685,6 @@ namespace Infinite_War
             }
             result = rotatedImage;                                              //드로우 한 결과를 return.
         }
-
-        private void WeaponCharge()                                 //무기가 검일 때, 차징.
-        {
-            if(player.is_charging)                                  //차징중이면, 시간을 누적시킴
-            {
-                GameData.sword_charge += GameMath.dt;
-            }
-        }
-
         private void ChangeImagePlayerWeapon(int weaponType)        //무기 스위칭하는 함수 (현재 무기 정보를 가져옴)
         {
             if(GameData.ab.is_RareSelected)                         //레어 능력이 선택되었다면
@@ -757,7 +759,7 @@ namespace Infinite_War
                     {   
                         enemy.hit(weapon.getDammage());             //적에게 일정한 데미지를 입히고
                         if (is_eff_sound) s_dagger_hit.Play();      //소리가 켜져있다면 대거 히트 소리    
-                        weapon.exist = false;                       //무기는 사용 끝
+                        weapon.AttackSuccess();                     //공격 성공
                     }
                 }
                 foreach (Enemy_speed enemy in enemy_speed)          //이하 같은 알고리즘
@@ -771,7 +773,7 @@ namespace Infinite_War
                     {
                         enemy.hit(weapon.getDammage());
                         if (is_eff_sound) s_dagger_hit.Play();
-                        weapon.exist = false;
+                        weapon.AttackSuccess();                     //공격 성공
                     }
                 }
                 foreach (Enemy_gun enemy in enemy_gun)
@@ -785,7 +787,7 @@ namespace Infinite_War
                     {
                         enemy.hit(weapon.getDammage());
                         if (is_eff_sound) s_dagger_hit.Play();
-                        weapon.exist = false;
+                        weapon.AttackSuccess();                     //공격 성공
                     }
                 }
                 foreach (Enemy_shield enemy in enemy_shield)
@@ -799,7 +801,7 @@ namespace Infinite_War
                     {
                         enemy.hit(weapon.getDammage());
                         if (is_eff_sound) s_dagger_hit.Play();
-                        weapon.exist = false;
+                        weapon.AttackSuccess();                     //공격 성공
                     }
                 }
             }
@@ -820,7 +822,7 @@ namespace Infinite_War
                     {
                         enemy.hit(weapon.getDammage());
                         if (is_eff_sound) s_gun_hit.Play();
-                        weapon.exist = false;
+                        weapon.AttackSuccess();                     //공격 성공
                     }
                 }
                 foreach (Enemy_speed enemy in enemy_speed)
@@ -834,7 +836,7 @@ namespace Infinite_War
                     {
                         enemy.hit(weapon.getDammage());
                         if (is_eff_sound) s_gun_hit.Play();
-                        weapon.exist = false;
+                        weapon.AttackSuccess();                     //공격 성공
                     }
                 }
                 foreach (Enemy_gun enemy in enemy_gun)
@@ -848,7 +850,7 @@ namespace Infinite_War
                     {
                         enemy.hit(weapon.getDammage());
                         if (is_eff_sound) s_gun_hit.Play();
-                        weapon.exist = false;
+                        weapon.AttackSuccess();                     //공격 성공
                     }
                 }
                 foreach (Enemy_shield enemy in enemy_shield)
@@ -862,7 +864,7 @@ namespace Infinite_War
                     {
                         enemy.hit(weapon.getDammage());
                         if (is_eff_sound) s_gun_hit.Play();
-                        weapon.exist = false;
+                        weapon.AttackSuccess();                     //공격 성공
                     }
                 }
             }
@@ -885,7 +887,7 @@ namespace Infinite_War
                         enemy.hit(weapon.getDammage());                     //총알데미지 입힘(약함)
                         if (is_eff_sound) s_rpg_hit.Play();                 //소리 재생
                         CheckBomb();                                        //폭파 범위에 닿는지 체크 (원)
-                        weapon.exist = false;                               //총알은 사용 끝
+                        weapon.AttackSuccess();                             //공격 성공
                     }
                 }
                 foreach (Enemy_speed enemy in enemy_speed)
@@ -901,7 +903,7 @@ namespace Infinite_War
                         enemy.hit(weapon.getDammage());
                         if (is_eff_sound) s_rpg_hit.Play();
                         CheckBomb();
-                        weapon.exist = false;
+                        weapon.AttackSuccess();                     //공격 성공
                     }
                 }
                 foreach (Enemy_gun enemy in enemy_gun)
@@ -917,7 +919,7 @@ namespace Infinite_War
                         enemy.hit(weapon.getDammage());
                         if (is_eff_sound) s_rpg_hit.Play();
                         CheckBomb();
-                        weapon.exist = false;
+                        weapon.AttackSuccess();                     //공격 성공
                     }
                 }
                 foreach (Enemy_shield enemy in enemy_shield)
@@ -933,7 +935,7 @@ namespace Infinite_War
                         enemy.hit(weapon.getDammage());
                         if (is_eff_sound) s_rpg_hit.Play();
                         CheckBomb();
-                        weapon.exist = false;
+                        weapon.AttackSuccess();                     //공격 성공
                     }
                 }
             }
@@ -1067,7 +1069,7 @@ namespace Infinite_War
          * Player
          * ***********************************/
 
-        private void playerAttack()                                 //플레이어 공격 함수
+        private void playerAttack()         //플레이어 공격 함수
         {
             if (GameData.ab.is_RareSelected)                        //레어 능력이 선택되었다면
             {
@@ -1118,14 +1120,13 @@ namespace Infinite_War
                 }
             }
         }
-        private void PlayerLiveCheck()                              //플레이어가 살아있는지 체크
+        private void PlayerLiveCheck()      //플레이어가 살아있는지 체크
         {
-            if (!player.exist)                                      //플레이어가 죽었다면
+            if (!player.exist)              //플레이어가 죽었다면
             {
-                Score.CheckNewRecord();                             //지금이 신기록인가?
-                Score.SaveRecord();                                 //신기록은 저장합니당
-                is_pause = true;                                    //일단 죽었으니 멈춰!
-                is_gaming = false;                                  //게임도 끝이야!
+                Score.CheckNewRecord();     //지금이 신기록인가?
+                is_pause = true;            //일단 죽었으니 멈춰!
+                is_gaming = false;          //게임도 끝이야!
             }
         }
 
@@ -1162,7 +1163,6 @@ namespace Infinite_War
             }
 
         }
-
         private void DaggerAttack()                           //단검 공격시
         {
             int i;  //인덱스
@@ -1241,7 +1241,7 @@ namespace Infinite_War
                 direction.x = PointToClient(MousePosition).X - (player.getPositionMid().x);
                 direction.y = PointToClient(MousePosition).Y - (player.getPositionMid().y);
                 player_bullet[i].exist = true;
-                player_bullet[i].SetObjectPosition(player.getPositionMid().x, player.getPositionMid().y);
+                player_bullet[i].SetObjectPosition(player.getPositionMid());
                 player_bullet[i].SetDirection(direction);
                 if (is_eff_sound) s_gun.Play();
             }
@@ -1349,7 +1349,6 @@ namespace Infinite_War
                 foreach (Enemy_normal enemy in enemy_normal)                                             //즉발 공격이기에 바로 충돌 체크
                 {
                     if (!enemy.exist) continue;
-
                     if (GameMath.getDistance(player.getPositionMid(), enemy.getPositionMid()) < player_sword[i].get_sword_range() / 2) //검 공격의 범위의 반 이내에 있는지 체크
                     {
                         enemy.hit(player_sword[i].getDammage());                                                                        //안에 있다면 맞아야지
@@ -1400,7 +1399,7 @@ namespace Infinite_War
             if (i != GameData.MAX_SWORD)
             {
                 player_sword[i].exist = true;
-                player_sword[i].SetObjectPosition(player.getPositionMid().x, player.getPositionMid().y);
+                player_sword[i].SetObjectPosition(player.getPositionMid());
                 player_sword[i].ChargingUp(GameData.sword_charge);  //강화된 범위를 가져옴
                 if (is_eff_sound) s_sword.Play();
                 //Check Colide
@@ -1450,6 +1449,13 @@ namespace Infinite_War
         {
             player.is_can_move = false;                       //차징중엔 집중 해야합니다. 움직일수 없어요
             player.is_charging = true;
+        }
+        private void WeaponCharge()                           //무기가 검일 때, 차징.
+        {
+            if (player.is_charging)                                  //차징중이면, 시간을 누적시킴
+            {
+                GameData.sword_charge += GameMath.dt;
+            }
         }
 
 
@@ -1637,7 +1643,6 @@ namespace Infinite_War
                 }
             }
         }
-
         private void MoveEnemy()                            //적의 이동
         {
             var enemy_normal_list = from enemyies in enemy_normal //각 존재하는 적들 리스트 뽑음
@@ -1699,7 +1704,7 @@ namespace Infinite_War
                 direction.x = (player.getPositionMid().x) - (enemy.getPositionMid().x);
                 direction.y = (player.getPositionMid().y) - (enemy.getPositionMid().y);
                 enemy_bullet[i].exist = true;
-                enemy_bullet[i].SetObjectPosition(enemy.getPositionMid().x, enemy.getPositionMid().y);
+                enemy_bullet[i].SetObjectPosition(enemy.getPositionMid());
                 enemy_bullet[i].SetDirection(direction);
             }
         }

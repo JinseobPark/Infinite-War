@@ -11,7 +11,7 @@ namespace Infinite_War
     {
         DAGGER, GUN, RPG, SWORD
     };
-    public enum WeaponRareUpList //레어업글 리스트
+    public enum WeaponRareUpList //업그레이드 리스트
     {
         NONE, DAGGER, GUN, RPG, SWORD
     };
@@ -42,7 +42,7 @@ namespace Infinite_War
     }
     public static class LevelUpBox  //레벨업시
     {
-        static public int[] probArray = new int[4] { 40, 30, 20, 5 }; //each high, mid, low, rare 각각 확률
+        static public int[] probArray = new int[4] { 40, 30, 20, 3 }; //each high, mid, low, rare 각각 확률
         static public int[] rared_probArray = new int[3] { 40, 30, 20}; //each high, mid, low 각각 확률
         static public List<AbilityBox>[] AbilityList = new List<AbilityBox>[4]; //각 희귀도에 따라 리스트를 가짐
 
@@ -75,23 +75,23 @@ namespace Infinite_War
             AbilityList[1].Add(temp);
             temp.SetAbilityBox("  **", "Movement Up", "  10", "", 12);
             AbilityList[1].Add(temp);
+            temp.SetAbilityBox(" ***", "Max HP Up", "  1", "", 13);
+            AbilityList[1].Add(temp);
 
             //고급 능력치
             temp.SetAbilityBox(" ***", "Movement Up", "  20", "", 20);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox(" ***", "Damage Up", "  40", "", 21);
+            temp.SetAbilityBox(" ***", "Damage Up", "  30", "", 21);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox(" ***", "Max HP Up", "  1", "", 22);
+            temp.SetAbilityBox(" ***", "Attack Speed Up", "  10", "", 22);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox(" ***", "Attack Speed Up", "  10", "", 23);
+            temp.SetAbilityBox(" ***", "Dagger Up", "  50", "", 23);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox(" ***", "Dagger Up", "  40", "", 24);
+            temp.SetAbilityBox(" ***", "Gun Up", "  50", "", 24);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox(" ***", "Gun Up", "  40", "", 25);
+            temp.SetAbilityBox(" ***", "RPG Up", "  50", "", 25);
             AbilityList[2].Add(temp);
-            temp.SetAbilityBox(" ***", "RPG Up", "  40", "", 26);
-            AbilityList[2].Add(temp);
-            temp.SetAbilityBox(" ***", "Sword Up", "  40", "", 27);
+            temp.SetAbilityBox(" ***", "Sword Up", "  50", "", 26);
             AbilityList[2].Add(temp);
 
             //한번만 선택 가능한 능력치.
@@ -150,7 +150,7 @@ namespace Infinite_War
                 return rared_probArray[0];
             }
         }
-        static public AbilityBox ShowLevelUpAbility()   //희귀도에 따른 능력을 가져는 함수
+        static public AbilityBox ShowLevelUpAbility()   //희귀도에 따른 능력을 가지는 함수
         {
             AbilityBox result = new AbilityBox();
             int Random_rarity = LevelUp_Quality();
@@ -202,29 +202,29 @@ namespace Infinite_War
                 case 12:
                     GameData.Upgrade_move_up(10);
                     break;
+                case 13:
+                    p.AddMaxHP();
+                    break;
                 case 20:
                     GameData.Upgrade_move_up(20);
                     break;
                 case 21:
-                    GameData.Upgrade_damage_up(40);
+                    GameData.Upgrade_damage_up(30);
                     break;
                 case 22:
-                    p.AddMaxHP();
-                    break;
-                case 23:
                     GameData.Upgrade_atkSpeed_up();
                     break;
+                case 23:
+                    GameData.Upgrade_dagger_up(50);
+                    break;
                 case 24:
-                    GameData.Upgrade_dagger_up(40);
+                    GameData.Upgrade_gun_up(50);
                     break;
                 case 25:
-                    GameData.Upgrade_gun_up(40);
+                    GameData.Upgrade_rpg_up(50);
                     break;
                 case 26:
-                    GameData.Upgrade_rpg_up(40);
-                    break;
-                case 27:
-                    GameData.Upgrade_sword_up(40);
+                    GameData.Upgrade_sword_up(50);
                     break;
                 case 30:
                     GameData.Upgrade_rare_up(1);
@@ -252,8 +252,12 @@ namespace Infinite_War
         }
         static public void CheckNewRecord() //신기록 체커
         {
-            if (record_score < GameData.GetKill())  //신기록보다 크면 지금 이순간 신기록
+            if (record_score < GameData.GetKill())  //신기록보다 크면 지금이 신기록
+            {
                 record_score = GameData.GetKill();
+                SaveRecord();
+            }
+
         }
         static public void SaveRecord()     //신기록 저장
         {
@@ -289,26 +293,26 @@ namespace Infinite_War
     public static class GameData    //게임 데이터 (매우 중요)
     {
         //창 사이즈
-        public const int FormSize_Width = 1200;
-        public const int FormSize_Height = 800;
+        public const int FormSize_Width = 1200; //폼 너비
+        public const int FormSize_Height = 800; //폼 높이
         //플레이어 사이즈
-        public const int player_width = 64;
-        public const int player_height = 64;
+        public const int player_width = 64; //플레이어 너비
+        public const int player_height = 64;    //플레이어 높이
         //적 사이즈
-        public const int enemy_width = 64;
-        public const int enemy_height = 64;
+        public const int enemy_width = 64;  //적 너비
+        public const int enemy_height = 64; //적 높이
         //각 최대 오브젝트 갯수
-        public const int MAX_DAGGER = 30;
-        public const int MAX_BULLET = 30;
-        public const int MAX_RPG = 20;
-        public const int MAX_SWORD = 10;
-        public const int MAX_BOMB = 10;
+        public const int MAX_DAGGER = 30;   //최대 단검 갯수
+        public const int MAX_BULLET = 30;   //최대 총알 갯수
+        public const int MAX_RPG = 20;      //최대 포탄 갯수
+        public const int MAX_SWORD = 10;    //최대 검 갯수
+        public const int MAX_BOMB = 10;     //최대 폭파 갯수
 
-        public const int MAX_ENEMY_NORMAL = 30;
-        public const int MAX_ENEMY_SPEED  = 20;
-        public const int MAX_ENEMY_GUN    = 10;
-        public const int MAX_ENEMY_SHIELD = 10;
-        public const int MAX_ENEMY_BULLET = 20;
+        public const int MAX_ENEMY_NORMAL = 30; //최대 일반 적
+        public const int MAX_ENEMY_SPEED  = 20; //최대 빠른 적
+        public const int MAX_ENEMY_GUN    = 10; //최대 총든 적
+        public const int MAX_ENEMY_SHIELD = 10; //최대 방패 적
+        public const int MAX_ENEMY_BULLET = 20; //최대 적 총알 수
         //적 이동속도
         public const float enemy_speed = 100.0f;
         //초기 플레이어 체력
@@ -326,37 +330,37 @@ namespace Infinite_War
         public const int ENEMY_BULLET_Create_Cool = 100;
 
         //Dagger
-        public const int dagger_width = 10;
-        public const int dagger_height = 20;
-        public const float dagger_distance = 150.0f;
-        public const float dagger_distance_up = 250.0f;
-        public const int init_dagger_dammage = 50;
-        static public int curr_dagger_dammage = 50;
+        public const int dagger_width = 10;             //단검 너비
+        public const int dagger_height = 20;             //단검 높이
+        public const float dagger_distance = 150.0f;    //일반 단검 사거리
+        public const float dagger_distance_up = 250.0f; //강화 단검 사거리
+        public const int init_dagger_dammage = 50;      //초기 단검 공격력
+        static public int curr_dagger_dammage = 50;     //현재 단검 공격력
         //Bullet
-        public const int bullet_width = 10;
-        public const int bullet_height = 10;
-        public const float bullet_distance = 300.0f;
-        public const int init_bullet_dammage = 30;
-        static public int curr_bullet_dammage = 30;
+        public const int bullet_width = 10;             //총알 너비
+        public const int bullet_height = 10;            //총알 높이
+        public const float bullet_distance = 300.0f;    //총알 사거리
+        public const int init_bullet_dammage = 30;      //초기 총알 공격력
+        static public int curr_bullet_dammage = 30;     //현재 총알 공격력
         //Rpg
-        public const int rpg_bullet_width = 15;
-        public const int rpg_buttet_height = 15;
-        public const int rpg_bomb_range = 200;
-        public const int rpg_bomb_up_range = 300;
-        public const int init_rpg_dammage = 1;
-        static public int curr_rpg_dammage = 1;
-        public const int init_bomb_dammage = 80;
-        static public int curr_bomb_dammage = 80;
-        public const double bomb_timer = 0.2;
+        public const int rpg_bullet_width = 15;         //포탄 너비
+        public const int rpg_buttet_height = 15;        //포탄 높이
+        public const int rpg_bomb_range = 200;          //일반 폭파 범위
+        public const int rpg_bomb_up_range = 300;       //강화 폭파 범위
+        public const int init_rpg_dammage = 1;          //초기 포탄 공격력
+        static public int curr_rpg_dammage = 1;         //현재 포탄 공격력
+        public const int init_bomb_dammage = 80;        //초기 폭파 공격력
+        static public int curr_bomb_dammage = 80;       //현재 폭파 공격력
+        public const double bomb_timer = 0.2;           //폭파 잔상 시간
         //sword
-        public const int sword_max_range = 300;
-        public const int sword_max_range_up = 450;
-        public const double sword_timer = 0.2;
-        static public double sword_charge = 0.0;
-        public const int init_sword_dammage = 100;
-        static public int curr_sword_dammage = 100;
-        static public double sword_normal_range_pertick = 1500.0;
-        static public double sword_upgrade_range_pertick = 2500.0;
+        public const int sword_max_range = 300;         //일반 최대 칼날 범위
+        public const int sword_max_range_up = 450;      //강화 최대 칼날 범위
+        public const double sword_timer = 0.2;          //칼날 잔상 시간
+        static public double sword_charge = 0.0;        //현재 검 차징 시간
+        public const int init_sword_dammage = 100;      //초기 검 공격력
+        static public int curr_sword_dammage = 100;     //현재 검 공격력
+        static public double sword_normal_range_pertick = 1500.0;       //시간에 따른 범위 변환율-일반
+        static public double sword_upgrade_range_pertick = 2500.0;      //시간에 따른 범위 변환율-강화
         //무기 타입은 4가지
         public const int varWeaponType = 4;
         //플레이어 offset
@@ -393,8 +397,8 @@ namespace Infinite_War
             ab.rare_up = WeaponRareUpList.NONE;
 
             weapon_cool[0] = 1.0f;
-            weapon_cool[1] = 1.0f;
-            weapon_cool[2] = 1.5f;
+            weapon_cool[1] = 0.8f;
+            weapon_cool[2] = 2.0f;
             weapon_cool[3] = 0.1f;
 
             curr_dagger_dammage = init_dagger_dammage ;
@@ -404,7 +408,7 @@ namespace Infinite_War
             curr_sword_dammage  = init_sword_dammage  ;
 
             is_rpg_up = false;
-            player_speed = 250.0f;
+            player_speed = 350.0f;
         }
         static public void StageUp()    //스테이지 올라가유
         {
@@ -472,7 +476,7 @@ namespace Infinite_War
                     break;
                 case 2:
                     ab.rare_up = WeaponRareUpList.GUN;
-                    weapon_cool[1] *= 0.5f;
+                    weapon_cool[1] *= 0.6f;
                     break;
                 case 3:
                     ab.rare_up = WeaponRareUpList.RPG;
